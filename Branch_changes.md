@@ -23,3 +23,10 @@ Pendiente para probar en vivo: pegar los dos SQL en Supabase, llenar `.env.local
 - Verificado: typecheck, lint, build de producción y prueba funcional del click-to-move en el navegador.
 
 [Listo :v]
+
+## 2026-07-16 — Documentación completa en README
+
+- README reescrito como documentación detallada del producto tras analizar toda la codebase: arquitectura en capas (cliente / servidor / Supabase), distribución de módulos comentada, entry points por tipo de evento, flujo de request paso a paso (Home, jugada en sesión de estudio, onboarding), sistema de llamadas (RSC + server actions, sin rutas API), auth en 3 capas (proxy, requireUser, RLS), modelo de datos tabla por tabla, motor SRS con sus tablas de calificación/scheduling, proveedores externos (Lichess/Chess.com + matcher), manejo de fechas (yyyy-mm-dd, timezone del perfil, cookie dev), tablero de estudio, design system vintage, catálogo con formato fuente y regeneración, tests, PWA, y una guía "¿dónde toco para…?" con enlaces directos a archivos.
+- Sin cambios de código; solo documentación.
+
+[Listo :v]

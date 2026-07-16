@@ -1,111 +1,444 @@
 # Zephyriov — Chess Opening Trainer
 
-WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente juegas**, con repetición espaciada estilo Anki. Analiza tus partidas de Lichess y Chess.com, detecta tus 3 aperturas más jugadas con blancas y 3 con negras, y te entrena sus líneas teóricas con un scheduler SRS.
+WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente juegas**, con repetición espaciada estilo Anki. Analiza tus partidas de Lichess y Chess.com, detecta tus 3 aperturas más jugadas con blancas y 3 con negras, y te entrena sus líneas teóricas con un scheduler SRS que califica cada bloque de jugadas y programa el próximo repaso.
 
-## Stack
+---
 
-| Pieza | Tecnología |
-|---|---|
-| Framework | Next.js 16 (App Router, plantilla oficial `with-supabase`) |
-| Base de datos + Auth | Supabase (Postgres + RLS, email/password) |
-| Ajedrez | `chess.js` (validación/SAN) + `react-chessboard` (tablero) |
-| Tests | Vitest (motor SRS) |
-| Deploy | Vercel |
-| Gestor de paquetes | **pnpm** |
+## Índice
+
+1. [Tecnologías](#tecnologías)
+2. [Setup](#setup)
+3. [Arquitectura](#arquitectura)
+4. [Distribución de módulos](#distribución-de-módulos)
+5. [Entry points](#entry-points)
+6. [Flujo de una request](#flujo-de-una-request)
+7. [Sistema de llamadas (cliente ↔ servidor)](#sistema-de-llamadas-cliente--servidor)
+8. [Autenticación y seguridad](#autenticación-y-seguridad)
+9. [Modelo de datos](#modelo-de-datos)
+10. [Motor SRS](#motor-srs)
+11. [Proveedores externos](#proveedores-externos)
+12. [Manejo de fechas](#manejo-de-fechas)
+13. [El tablero de estudio](#el-tablero-de-estudio)
+14. [UI: diseño vintage](#ui-diseño-vintage)
+15. [Catálogo de aperturas](#catálogo-de-aperturas)
+16. [Tests](#tests)
+17. [PWA](#pwa)
+18. [Guía rápida: ¿dónde toco para…?](#guía-rápida-dónde-toco-para)
+
+---
+
+## Tecnologías
+
+| Pieza | Tecnología | Notas |
+|---|---|---|
+| Framework | Next.js 16 (App Router, Turbopack) | `cacheComponents: true` → las páginas usan Partial Prerendering (shell estático + contenido dinámico en streaming bajo `<Suspense>`) |
+| UI | React 19 + Tailwind CSS 3 + shadcn/ui (Radix) | Componentes base en `components/ui/` |
+| Base de datos + Auth | Supabase (Postgres + RLS, email/password) | Cliente SSR vía `@supabase/ssr`, sesión en cookies |
+| Ajedrez | `chess.js` (validación, SAN, legalidad) + `react-chessboard` v5 (tablero) | |
+| Tipografías | Alfa Slab One, Oswald, Geist (`next/font`) | |
+| Tests | Vitest | Cubren el motor SRS puro |
+| Deploy | Vercel | |
+| Gestor de paquetes | **pnpm** | |
 
 ## Setup
 
 1. **Supabase**: crea un proyecto y ejecuta en el SQL editor, en orden:
-   - [supabase/schema.sql](supabase/schema.sql) — tablas, enums, RLS y triggers (una sola vez).
-   - [supabase/seed.sql](supabase/seed.sql) — catálogo curado de aperturas (una sola vez; **regenerable**, ver abajo).
+   - [supabase/schema.sql](supabase/schema.sql) — enums, tablas, RLS y triggers (una sola vez).
+   - [supabase/seed.sql](supabase/seed.sql) — catálogo curado de aperturas (una sola vez; **regenerable**, ver [Catálogo](#catálogo-de-aperturas)).
 2. **Variables de entorno**: copia `.env.example` a `.env.local` y llena:
    ```
    NEXT_PUBLIC_SUPABASE_URL=...
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
    ```
+   Son las únicas dos variables que usa la app (cliente y servidor). Si faltan, el proxy deja pasar todo sin auth (modo tutorial de la plantilla, ver `hasEnvVars` en [lib/utils.ts](lib/utils.ts)).
 3. **Correr**:
    ```
    pnpm install
-   pnpm dev        # desarrollo
+   pnpm dev        # desarrollo (localhost:3000)
    pnpm test       # tests del motor SRS
+   pnpm lint       # eslint
    pnpm build      # build de producción
    ```
 4. **Deploy en Vercel**: importa el repo, añade las dos variables de entorno y listo. El manifest + service worker hacen la app instalable como PWA.
+5. **Simular días** (solo desarrollo): la cookie `zephyriov-dev-date` (yyyy-mm-dd) reemplaza "hoy" para probar el SRS entre días sin esperar:
+   ```js
+   document.cookie = "zephyriov-dev-date=2026-07-17; path=/"
+   ```
 
 ## Arquitectura
 
+Tres capas con una regla central: **la lógica de dominio (SRS) es pura y no hace I/O**; el acceso a datos vive en server actions y queries del servidor; el cliente solo maneja interacción del tablero y formularios.
+
 ```
+┌────────────────────────────────────────────────────────────┐
+│  CLIENTE (componentes "use client")                        │
+│  Tablero, timer, formularios, onboarding                   │
+│  components/study/, components/onboarding/, settings/      │
+└──────────────┬─────────────────────────────────────────────┘
+               │ invoca server actions (RPC) / recibe props de RSC
+┌──────────────▼─────────────────────────────────────────────┐
+│  SERVIDOR (Next App Router)                                │
+│  · proxy.ts → refresca sesión y protege rutas              │
+│  · app/*/page.tsx (RSC) → leen con lib/queries/            │
+│  · lib/actions/ ("use server") → escrituras y mutaciones   │
+│      usa ↓ para las decisiones de dominio                  │
+│  · lib/srs/ → motor puro (grading, scheduler, sesión)      │
+│  · lib/external/ → APIs de Lichess / Chess.com             │
+└──────────────┬─────────────────────────────────────────────┘
+               │ @supabase/ssr (cookies) + PostgREST
+┌──────────────▼─────────────────────────────────────────────┐
+│  SUPABASE (Postgres)                                       │
+│  Catálogo global (solo lectura) + datos por usuario (RLS)  │
+└────────────────────────────────────────────────────────────┘
+```
+
+Decisiones clave:
+
+- **Calificación server-side**: el cliente reporta jugadas crudas (`move_attempts`); el grade y el update SRS se calculan en el servidor (`lib/actions/session.ts`). El cliente nunca decide su propia nota.
+- **Motor SRS puro**: `lib/srs/` no importa Supabase ni Next — recibe datos y devuelve decisiones. Por eso es 100% testeable con Vitest.
+- **Catálogo curado y validado**: el contenido se autora en `scripts/catalog/*.mjs` y el generador valida cada SAN con chess.js antes de emitir SQL — imposible sembrar una línea ilegal.
+- **Multiusuario desde el día 1**: todo el modelo lleva `user_id` + RLS aunque hoy haya una sola cuenta.
+- **Transposiciones ignoradas**: se usa el tag de apertura que reporta cada API, no detección por FEN.
+
+## Distribución de módulos
+
+```
+proxy.ts                 Middleware (Next 16 lo llama "proxy"): corre en CADA request
 app/
-  page.tsx               Home: streak + botón de sesión diaria + barras de progreso
-  onboarding/            Conectar usernames → análisis → confirmar 6 aperturas
-  study/                 Sesión de estudio (tablero, timer, feedback, explicaciones)
-  progress/              Detalle de progreso por apertura/línea
-  settings/              Config de sesión, timezone y color por apertura
-  auth/                  Login/sign-up (de la plantilla Supabase)
-  manifest.ts            Manifest PWA
+  layout.tsx             Root layout: fuentes, ThemeProvider, registro del SW
+  page.tsx               Home: streak + botón de sesión diaria + progreso
+  study/page.tsx         Sesión de estudio (crea/reanuda la sesión del día)
+  progress/page.tsx      Detalle de progreso por apertura/línea
+  settings/page.tsx      Config de sesión, timezone y color por apertura
+  onboarding/page.tsx    Conectar usernames → análisis → confirmar aperturas
+  auth/                  Login/sign-up/recuperación (plantilla Supabase)
+    confirm/route.ts     Route handler: intercambio del token de email
+  manifest.ts            Manifest PWA (generado por Next)
+  globals.css            Tokens del design system + clases vintage
 lib/
-  srs/                   Motor SRS puro (sin I/O): grading, scheduler, session-builder + tests
-  external/              Clientes Lichess / Chess.com + matcher de aperturas
-  actions/               Server actions: onboarding, session, settings
-  queries/               Lecturas agregadas para Home/Progress/Settings
-  supabase/              Clientes SSR de la plantilla (client/server/proxy)
+  srs/                   ★ Motor SRS puro (sin I/O) + tests
+    grading.ts             Califica un bloque de jugadas → bad/mid/good
+    scheduler.ts           Aplica la nota a la tarjeta → próximo due date
+    session-builder.ts     Arma la sesión diaria (due + nuevas round-robin)
+    types.ts               Grade, LineState, CardState, MoveResult
+  actions/               Server actions ("use server") — todas las escrituras
+    auth-helpers.ts        requireUser(): client + userId + profile
+    session.ts             Crear sesión del día, calificar bloques, streak
+    onboarding.ts          Analizar partidas, confirmar aperturas, cambiar color
+    settings.ts            Guardar preferencias
+  queries/
+    dashboard.ts           getDashboardData(): lectura agregada para Home/Progress/Settings
+  external/              Clientes de APIs públicas (sin tokens)
+    lichess.ts             ndjson de partidas recientes
+    chesscom.ts            Archivos mensuales públicos
+    opening-matcher.ts     Match de tags contra el catálogo (clave más larga gana)
+  supabase/              Clientes SSR de la plantilla
+    client.ts              createBrowserClient (componentes cliente)
+    server.ts              createServerClient con cookies (RSC/actions)
+    proxy.ts               updateSession(): refresh de sesión + redirect a login
+  dates.ts               getToday(timezone) + cookie dev de fecha
+  db/types.ts            Tipos TS espejo de las tablas
+  study-types.ts         Contratos cliente↔servidor de la sesión de estudio
 components/
   study/                 StudySession (tablero + quiz), MoveTimer, GradeBadge
   onboarding/, settings/ Flujos cliente
+  ui/                    Base shadcn restilizada (button, card, input, label…)
+  app-header.tsx         Franja de navegación
+  streak-seal.tsx        Sello dentado SVG de la racha
+  star-divider.tsx       Divisor de sección con estrellas
+  progress-bar.tsx       Barra de progreso con borde de tinta
+  page-fallback.tsx      Fallback compartido de Suspense
 scripts/
   catalog/               Datos fuente del catálogo (1 archivo por apertura)
   generate-seed.mjs      Valida cada línea con chess.js y genera supabase/seed.sql
   generate-icons.mjs     Genera los iconos PWA con sharp
 supabase/
-  schema.sql, seed.sql   SQL listo para pegar en la consola
+  schema.sql, seed.sql   SQL listo para pegar en la consola de Supabase
 ```
 
-### Modelo de datos
+## Entry points
 
-- **Catálogo global** (solo lectura): `openings` → `opening_lines` (4 por apertura) → `line_moves` (cada media-jugada con su SAN y explicación en inglés).
-  - `openings.playable_colors`: desde qué lados tiene sentido estudiarla (ej. la Fantasy se puede estudiar como blancas o negras).
-  - `openings.detection_keys`: claves para hacer match con los tags de apertura de las APIs.
-- **Por usuario** (RLS `user_id = auth.uid()`): `profiles`, `user_openings` (las 6 elegidas + color), `user_lines` (la "tarjeta" SRS), `study_sessions` → `session_items` → `move_attempts`, `user_streaks`.
+Por dónde "entra" la ejecución según el tipo de evento:
 
-### Motor SRS (`lib/srs/`)
+| Evento | Entry point | Qué pasa |
+|---|---|---|
+| **Cualquier request HTTP** | [proxy.ts](proxy.ts) → [lib/supabase/proxy.ts](lib/supabase/proxy.ts) | Refresca la sesión de Supabase en cookies y redirige a `/auth/login` si no hay usuario (excepto `/auth/*`, manifest y sw) |
+| **Carga de página** | `app/<ruta>/page.tsx` | RSC con `<Suspense fallback={<PageFallback/>}>`; la parte async lee datos y renderiza |
+| **Primer render de la app** | [app/layout.tsx](app/layout.tsx) | Fuentes, tema, `<SwRegister/>` (service worker) |
+| **Mutación desde el cliente** | funciones de `lib/actions/*.ts` | Server actions invocadas como funciones async desde componentes cliente |
+| **Confirmación de email** | [app/auth/confirm/route.ts](app/auth/confirm/route.ts) | Route handler GET que canjea el token OTP |
+| **Instalación PWA** | [app/manifest.ts](app/manifest.ts) + [public/sw.js](public/sw.js) | Manifest generado por Next; SW mínimo para installability |
 
-Sigue la spec del proyecto; donde la spec calla, usa los defaults de Anki (SM-2 simplificado):
+Las páginas protegidas siguen todas el mismo patrón:
 
-- **Calificación por bloque** (`grading.ts`): primer bloque → cualquier error = bad, lento (>2 min) = mid, limpio = good. Bloques acumulados → >1 error = bad, 1 error o lento = mid, limpio = good.
-- **Scheduler** (`scheduler.ts`): nuevas → bad/mid repiten en la sesión, good gradúa a 1 día. En repaso → bad = lapse (vuelve a aprendizaje, reinicia en 1d al aprobar), mid = mañana sin crecer, good = 1d → 3d → ×2.5 sin tope.
-- **Profundidad**: good limpio desbloquea el siguiente bloque de movimientos (4 → 8 → 10...); la unidad de repetición siempre es el bloque acumulado completo.
-- **Sesión** (`session-builder.ts`): todos los repasos due + hasta N nuevas (default 6, round-robin entre aperturas). Nuevas primero, fallos se reencolan al final.
-- **Streak**: ≥3 líneas nuevas revisadas en el día (o todas si quedan menos de 3; con el pool agotado, completar los repasos cuenta).
+```tsx
+export default function Page() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <Content />            {/* async: hace las queries */}
+    </Suspense>
+  );
+}
+```
 
-### UI: diseño vintage
+El shell se prerenderiza estático (PPR) y el contenido con datos llega por streaming. Si `getDashboardData()`/`requireUser()` lanza (sin sesión), el componente hace `redirect("/auth/login")`.
+
+## Flujo de una request
+
+### A) Carga del Home (`GET /`)
+
+```
+Browser ── GET / ──▶ proxy.ts
+                      │ updateSession(): lee cookies, getClaims()
+                      │ sin usuario → 307 /auth/login  ✋
+                      ▼ con usuario
+                    app/page.tsx (RSC)
+                      │ shell estático inmediato + Suspense
+                      ▼
+                    HomeContent (async)
+                      │ getDashboardData()  ← lib/queries/dashboard.ts
+                      │   requireUser() → profile
+                      │   getToday(profile.timezone)
+                      │   4 queries paralelas: streak, sesión de hoy,
+                      │   user_openings, user_lines (+ line_moves p/ totales)
+                      ▼
+                    HTML en streaming con streak, estado del día y progreso
+```
+
+### B) Una jugada en la sesión de estudio (el flujo central)
+
+```
+1. /study (RSC) llama getOrCreateTodaySession()          [lib/actions/session.ts]
+   · Si no existe study_session para hoy → buildSession() [lib/srs/session-builder.ts]
+     arma los items (repasos due + N nuevas round-robin) y los inserta.
+   · Devuelve pendingItems como StudyItem[] (jugadas + explicaciones ya incluidas).
+
+2. <StudySession> (cliente) muestra la línea:             [components/study/study-session.tsx]
+   · El rival "juega solo" sus plies (delay 600ms, chess.js local).
+   · El estudiante mueve por drag o click-click → tryMove():
+       - jugada ilegal → rebota, sin penalización
+       - correcta → avanza; incorrecta → se muestra 900ms y se revela la teoría
+   · Cada intento se acumula localmente: {ply, expectedSan, playedSan, correct, elapsedMs}
+
+3. Bloque terminado → el cliente invoca submitLineResult(sessionItemId, results)
+   (server action = POST automático de Next)
+
+4. En el servidor:                                        [lib/actions/session.ts]
+   a. requireUser() + getToday(timezone)
+   b. gradeBlock(results, isFirstBlock)   → bad/mid/good  [lib/srs/grading.ts]
+   c. inserta move_attempts (auditoría) y marca el session_item
+   d. applyGrade(card, grade, today)      → nueva CardState [lib/srs/scheduler.ts]
+   e. update de user_lines (state, interval, due_date, unlocked_moves…)
+   f. ¿repeatInSession? → inserta un nuevo session_item (attempt_number+1)
+      y lo devuelve para que el cliente lo encole al final
+   g. maybeCompleteSession() + updateStreak()
+   h. revalidatePath("/") → el Home refleja el progreso
+
+5. El cliente muestra el GradeBadge y "Continue" pasa a la siguiente línea.
+```
+
+### C) Onboarding
+
+```
+OnboardingFlow (cliente)
+  → analyzeOpenings(lichess, chesscom)      [lib/actions/onboarding.ts]
+      Promise.allSettled(fetchLichessGames, fetchChesscomGames)
+      → suggestOpenings(games, catálogo)    [lib/external/opening-matcher.ts]
+      (no persiste nada; una fuente caída no rompe la otra)
+  → usuario ajusta colores → confirmOpenings(selections)
+      desactiva selección previa, upsert user_openings,
+      crea user_lines faltantes (las que sobreviven conservan progreso),
+      marca profiles.onboarded_at → redirect a /
+```
+
+## Sistema de llamadas (cliente ↔ servidor)
+
+No hay rutas API manuales (`app/api/*` no existe). Toda la comunicación usa dos mecanismos de Next:
+
+1. **Lecturas** — React Server Components llaman directamente a `lib/queries/` (o a `getOrCreateTodaySession`) durante el render. Los datos llegan al cliente como props serializadas.
+2. **Escrituras** — Server actions (`"use server"` en `lib/actions/`). Los componentes cliente las importan y las invocan como funciones async; Next las convierte en un POST bajo el capó:
+
+```tsx
+// cliente
+import { submitLineResult } from "@/lib/actions/session";
+const res = await submitLineResult(itemId, results); // ← RPC tipado
+```
+
+Reglas del proyecto:
+
+- Toda action empieza con `requireUser()` ([lib/actions/auth-helpers.ts](lib/actions/auth-helpers.ts)): resuelve el cliente Supabase, el `userId` y el `profile`, y lanza si no hay sesión (backstop del proxy).
+- Las actions que cambian datos visibles terminan con `revalidatePath(...)` para invalidar el caché de las páginas.
+- Los contratos de datos entre tablero y servidor viven en [lib/study-types.ts](lib/study-types.ts) (`StudyItem`, `StudyMoveResult`, `SubmitResult`) — si cambias el shape, ese es el único lugar.
+- Los errores se lanzan como `Error(message)` y el cliente los captura y muestra (`setError`).
+
+## Autenticación y seguridad
+
+Tres capas independientes:
+
+1. **Proxy/middleware** ([lib/supabase/proxy.ts](lib/supabase/proxy.ts)): corre en cada request, refresca el token en cookies (`getClaims()`) y redirige a `/auth/login` si no hay usuario. Rutas públicas: todo `/auth/*`, `/manifest.webmanifest`, `/sw.js`.
+2. **`requireUser()`** en cada action/query: defensa en profundidad si algo esquiva el proxy.
+3. **RLS en Postgres** (la garantía real): el catálogo es `select`-only para usuarios autenticados; toda tabla de usuario exige `user_id = auth.uid()`. `session_items` y `move_attempts` no llevan `user_id` — heredan la propiedad vía `exists(...)` contra su sesión padre. Aunque el código del servidor tuviera un bug, un usuario no puede leer/escribir filas ajenas.
+
+Los perfiles se crean solos: trigger `on_auth_user_created` → inserta `profiles` con defaults (6 líneas/sesión, bloques de 4, timezone UTC).
+
+## Modelo de datos
+
+Dos mundos en el mismo schema ([supabase/schema.sql](supabase/schema.sql)):
+
+**Catálogo global (curado, solo lectura)**
+
+```
+openings ─1:N─ opening_lines ─1:N─ line_moves
+```
+
+| Tabla | Qué guarda |
+|---|---|
+| `openings` | Apertura estudiable. `playable_colors`: desde qué lados tiene sentido estudiarla. `detection_keys`: claves para el matcher |
+| `opening_lines` | Las 4 líneas teóricas de cada apertura (`rank` 1–4) |
+| `line_moves` | Cada media-jugada: `ply` (1-based, impar = blancas), `san`, `explanation` |
+
+**Datos por usuario (RLS)**
+
+```
+profiles      user_openings ──▶ openings
+user_lines ──▶ opening_lines          (la "tarjeta" SRS)
+study_sessions ─1:N─ session_items ──▶ user_lines
+                        └─1:N─ move_attempts
+user_streaks
+```
+
+| Tabla | Qué guarda |
+|---|---|
+| `profiles` | Usernames externos, preferencias (`lines_per_session`, `moves_per_block`, `timezone`), `onboarded_at` |
+| `user_openings` | Las aperturas elegidas + color de estudio. `is_active` permite re-onboarding sin perder historial |
+| `user_lines` | **La tarjeta SRS**: `state` (new/review), `unlocked_moves`, `interval_days`, `due_date`, `reps`, `lapses`, `last_result` |
+| `study_sessions` | Una por usuario por día (`unique(user_id, session_date)`) |
+| `session_items` | Cada línea repasada en la sesión; los reintentos crean filas nuevas con `attempt_number+1` (historial completo) |
+| `move_attempts` | Cada jugada intentada, con SAN esperado/jugado y tiempo — auditoría y datos futuros |
+| `user_streaks` | `current_streak`, `best_streak`, `last_active_date` |
+
+## Motor SRS
+
+Todo en [lib/srs/](lib/srs/), puro y testeado. Sigue la spec del proyecto; donde la spec calla, usa defaults de Anki (SM-2 simplificado).
+
+**Unidad de repetición**: el *bloque acumulado* — la línea siempre se repasa desde la jugada 1 hasta la profundidad desbloqueada (`unlocked_moves` jugadas del estudiante).
+
+**Calificación** ([grading.ts](lib/srs/grading.ts)) — umbral de lentitud: 2 minutos por jugada:
+
+| Situación | bad | mid | good |
+|---|---|---|---|
+| Primer bloque | cualquier error | sin errores, alguna lenta | limpio |
+| Bloque acumulado | >1 error | 1 error o alguna lenta | limpio |
+
+**Scheduler** ([scheduler.ts](lib/srs/scheduler.ts)) — constantes: `EASE = 2.5`, graduación 1d, primer repaso 3d:
+
+| Estado | bad | mid | good |
+|---|---|---|---|
+| `new` | repite en la sesión | repite en la sesión | gradúa → due mañana + desbloquea bloque |
+| `review` | **lapse**: vuelve a `new`, repite en la sesión, intervalo reinicia | due mañana, intervalo no crece | 1d → 3d → ×2.5 sin tope + desbloquea bloque |
+
+**Profundidad**: un `good` limpio desbloquea `moves_per_block` jugadas más (4 → 8 → 10…) hasta agotar la línea (~10 jugadas del estudiante).
+
+**Sesión diaria** ([session-builder.ts](lib/srs/session-builder.ts)): todos los repasos con `due_date <= hoy` + hasta `lines_per_session` líneas nuevas, elegidas round-robin entre aperturas (con shuffle) para variar el menú. Nuevas primero; los fallos se reencolan al final.
+
+**Streak** (en [lib/actions/session.ts](lib/actions/session.ts)): se mantiene al completar ≥3 líneas nuevas distintas en el día — o todas si la sesión trae menos de 3; con el pool de nuevas agotado, completar los repasos cuenta. Solo se contabiliza una vez por día; si `last_active_date` fue ayer, `current_streak + 1`, si no, reinicia en 1.
+
+## Proveedores externos
+
+Dos APIs públicas, **sin tokens ni API keys** ([lib/external/](lib/external/)):
+
+| Proveedor | Endpoint | Detalles |
+|---|---|---|
+| Lichess | `GET lichess.org/api/games/user/{u}?max=300&opening=true&perfType=blitz,rapid,classical` | ndjson; el tag de apertura viene en cada partida |
+| Chess.com | `GET api.chess.com/pub/player/{u}/games/archives` → últimos 3 archivos mensuales | máx. 300 partidas blitz/rapid/daily; la apertura se extrae del header `ECOUrl` del PGN |
+
+Ambos se piden con `cache: "no-store"` y `Promise.allSettled`: si una fuente falla, la otra sigue y el error se reporta como aviso (`sourceErrors`), no como excepción — salvo que fallen las dos.
+
+**Matcher** ([opening-matcher.ts](lib/external/opening-matcher.ts)): normaliza los nombres (minúsculas, solo `[a-z0-9]`) y compara contra las `detection_keys` del catálogo; **la clave coincidente más larga gana** ("Fantasy Variation" le gana a "Caro-Kann"). Después cuenta partidas por (apertura, color), filtra por `playable_colors` y devuelve el top 3 de cada color — sin repetir una apertura en ambos colores.
+
+## Manejo de fechas
+
+Regla de oro: **el SRS trabaja con strings `yyyy-mm-dd`, nunca con `Date` en operaciones de dominio.** Eso elimina bugs de timezone/DST y permite comparar con `<=` lexicográfico.
+
+- **"Hoy" es del usuario, no del servidor**: `getToday(profile.timezone)` ([lib/dates.ts](lib/dates.ts)) formatea la fecha actual en la timezone IANA del perfil (`Intl.DateTimeFormat("en-CA")` produce yyyy-mm-dd). El rollover del día — cuándo aparece una sesión nueva — sigue la timezone configurada en Settings.
+- **Aritmética**: `addDays(isoDate, n)` ([scheduler.ts](lib/srs/scheduler.ts)) opera en UTC puro (`T00:00:00Z`) para que sumar días jamás drifte por DST.
+- **Override en desarrollo**: la cookie `zephyriov-dev-date` reemplaza "hoy" (solo con `NODE_ENV=development`) para simular el paso de días.
+- **Columnas**: `due_date` y `session_date` son `date` en Postgres y viajan como strings; los timestamps de auditoría (`created_at`, `completed_at`…) sí son `timestamptz`.
+
+## El tablero de estudio
+
+[components/study/study-session.tsx](components/study/study-session.tsx) — un solo componente cliente maneja todo el quiz:
+
+- **Estado**: una instancia de `chess.js` en un `useRef` es la fuente de verdad de la posición; el FEN en estado re-renderiza `react-chessboard`.
+- **Dos formas de mover, una sola lógica**: drag (`onPieceDrop`) y click-click (`onSquareClick`, estilo lichess/chess.com, sin premoves) convergen en `tryMove(from, to)`:
+  - Click en pieza propia → selección (anillo dorado) + destinos legales (punto en vacías, anillo en capturas, vía `squareStyles`).
+  - Click en destino ejecuta; click en la misma pieza deselecciona; `canDragPiece` limita el arrastre a las piezas del estudiante.
+  - Jugada ilegal → rebota sin penalización. Incorrecta → se muestra 900 ms, se deshace y se revela la jugada de teoría. Promoción: siempre dama.
+- **El rival juega solo** sus plies con 600 ms de delay (efecto en `useEffect` sobre el ply actual).
+- **Timer por jugada** ([move-timer.tsx](components/study/move-timer.tsx)): cronómetro visual que se pone rojo al pasar el umbral de 2 min; el tiempo real usado para calificar se mide en `tryMove` (`elapsedMs`).
+- **Fin del bloque** → `submitLineResult` (ver [flujo B](#b-una-jugada-en-la-sesión-de-estudio-el-flujo-central)); si el servidor reencola la línea, el cliente la agrega al final de su cola local.
+
+## UI: diseño vintage
 
 Estética de cartel impreso años 20–50 (papel envejecido + rojo cartel + teal de fuente de sodas + tinta cálida), inspirada en UI kits retro y portadas constructivistas de ajedrez:
 
-- **Tokens** en [app/globals.css](app/globals.css): además de los tokens shadcn, `--ink`, `--teal`, `--gold` y `--paper` (expuestos en Tailwind como `ink/teal/gold/paper`). El fondo lleva un grano de medios tonos sutil (radial-gradient). Hay variante `.dark` en papel chocolate.
-- **Tipografía**: Alfa Slab One (`font-display`, títulos h1–h3 y marca), Oswald (`font-label`, botones/etiquetas en mayúsculas con tracking), Geist para cuerpo.
-- **Clases utilitarias** (en `@layer components`): `card-vintage` (borde 2px tinta + sombra dura offset `shadow-press`), `label-vintage` (mayúsculas condensadas), `ribbon` (banner con puntas bifurcadas vía clip-path; sin borde/sombra porque clip-path los recorta).
-- **Componentes**: botones con sombra dura que se "presiona" en `:active`; inputs píldora con foco dorado; header como franja roja de cartel; racha en sello dentado SVG ([components/streak-seal.tsx](components/streak-seal.tsx)); divisores con estrellas ([components/star-divider.tsx](components/star-divider.tsx)).
-- **Tablero**: casillas crema/teal a juego con la paleta, marco tipo gabinete teal, y coordenadas coloreadas por casilla.
+- **Tokens** en [app/globals.css](app/globals.css): además de los tokens shadcn, `--ink`, `--teal`, `--gold` y `--paper` (expuestos en Tailwind como `ink/teal/gold/paper`, ver [tailwind.config.ts](tailwind.config.ts)). El fondo lleva un grano de medios tonos sutil. Hay variante `.dark` en papel chocolate.
+- **Tipografía**: Alfa Slab One (`font-display`, h1–h3 y marca), Oswald (`font-label`, botones/etiquetas en mayúsculas con tracking), Geist para cuerpo. Cargadas en [app/layout.tsx](app/layout.tsx) con `next/font`.
+- **Clases utilitarias** (`@layer components`): `card-vintage` (borde 2px tinta + sombra dura offset `shadow-press`), `label-vintage` (mayúsculas condensadas), `ribbon` (banner con puntas bifurcadas vía clip-path; sin borde/sombra porque clip-path los recorta).
+- **Componentes**: botones con sombra dura que se "presiona" en `:active`; inputs píldora con foco dorado; header como franja roja de cartel; racha en sello dentado SVG ([streak-seal.tsx](components/streak-seal.tsx)); divisores con estrellas ([star-divider.tsx](components/star-divider.tsx)).
+- **Tablero**: casillas crema/teal a juego con la paleta, marco tipo gabinete teal, coordenadas coloreadas por casilla (constantes `BOARD_LIGHT`/`BOARD_DARK` en study-session.tsx).
 
-### Tablero: click-to-move
+## Catálogo de aperturas
 
-El tablero de estudio acepta **arrastrar y también click-click** (como lichess/chess.com, sin premoves): click en una pieza propia la selecciona (anillo dorado) y muestra sus destinos legales (punto en casillas vacías, anillo en capturas); click en un destino ejecuta la jugada, click en la misma pieza la deselecciona. Ambas vías comparten `tryMove()` en [components/study/study-session.tsx](components/study/study-session.tsx), así el registro de intentos y el flujo de jugada errónea es idéntico. `canDragPiece` limita el arrastre a las piezas del estudiante.
+14 aperturas × 4 líneas × ~10 jugadas del estudiante (1,120 medias-jugadas con explicación en inglés): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian.
 
-### Decisiones técnicas
+**Formato fuente** (un archivo por apertura en [scripts/catalog/](scripts/catalog/)):
 
-- **Catálogo curado y validado**: el contenido se autora en `scripts/catalog/*.mjs` y `generate-seed.mjs` **valida cada secuencia SAN con chess.js** antes de emitir el SQL — imposible sembrar una línea ilegal. Para editar el catálogo: modificar los `.mjs`, correr `node scripts/generate-seed.mjs` y re-ejecutar el seed.
-- **Calificación server-side**: el cliente reporta jugadas crudas (`move_attempts`); el grade y el update SRS se calculan en el server action (`lib/actions/session.ts`).
-- **Transposiciones ignoradas**: se usa el tag de apertura que reporta cada API (spec §8).
-- **Cambio de color**: cambiar el lado de estudio de una apertura resetea el SRS de sus líneas (las jugadas calificadas cambian por completo).
-- **Fecha dev**: en desarrollo, la cookie `zephyriov-dev-date` (yyyy-mm-dd) simula "hoy" para probar el SRS entre días: `document.cookie = "zephyriov-dev-date=2026-07-15; path=/"`.
-- **Multiusuario desde el día 1**: todo el modelo lleva `user_id` + RLS aunque hoy haya una sola cuenta (spec §13).
+```js
+export default {
+  slug: "ponziani",
+  name: "Ponziani Opening",
+  eco: "C44",
+  playableColors: ["white"],
+  detectionKeys: ["ponziani"],
+  lines: [
+    { rank: 1, name: "Main Line: 3...Nf6 4.d4",
+      moves: [["e4", "Claim the center..."], ["e5", "..."], /* [san, explicación] */] },
+  ],
+};
+```
 
-## Análisis de partidas
+**Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs`, corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados) y re-ejecuta `supabase/seed.sql` en Supabase.
 
-- **Lichess**: `GET /api/games/user/{u}?max=300&opening=true&perfType=blitz,rapid,classical` (ndjson, sin token).
-- **Chess.com**: archivos mensuales públicos (últimos ~3 meses, máx 300 partidas, blitz/rapid/daily), apertura extraída del header `ECOUrl` del PGN.
-- El matcher normaliza nombres (minúsculas, sin símbolos) y elige la apertura del catálogo cuya clave coincidente sea **más larga** (la más específica gana: "Fantasy Variation" > "Caro-Kann").
+## Tests
 
-## Catálogo actual
+```
+pnpm test
+```
 
-14 aperturas × 4 líneas × ~10 movimientos del estudiante (1,120 medias-jugadas con explicación): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian.
+Vitest cubre el motor SRS puro ([lib/srs/__tests__/](lib/srs/__tests__/)): calificación de bloques (primer bloque vs acumulado, errores, lentitud), scheduler (graduación, lapses, crecimiento de intervalos, desbloqueo de profundidad) y armado de sesión (due filtering, round-robin, pool agotado). La lógica con I/O (actions) se mantiene delgada precisamente para que lo testeable esté aquí.
+
+## PWA
+
+- [app/manifest.ts](app/manifest.ts): manifest con nombre, colores del tema e iconos (192/512, generados con `node scripts/generate-icons.mjs`).
+- [public/sw.js](public/sw.js): service worker mínimo — existe para cumplir el criterio de instalabilidad, no cachea de forma agresiva.
+- [components/sw-register.tsx](components/sw-register.tsx): lo registra en el cliente; su fallo es no-fatal.
+
+## Guía rápida: ¿dónde toco para…?
+
+| Quiero… | Archivo(s) |
+|---|---|
+| Cambiar cómo se califica un bloque | [lib/srs/grading.ts](lib/srs/grading.ts) (+ sus tests) |
+| Cambiar intervalos/ease del scheduler | [lib/srs/scheduler.ts](lib/srs/scheduler.ts) (+ sus tests) |
+| Cambiar qué entra en la sesión diaria | [lib/srs/session-builder.ts](lib/srs/session-builder.ts) |
+| Cambiar la regla del streak | `updateStreak` en [lib/actions/session.ts](lib/actions/session.ts) |
+| Tocar el tablero / interacción de jugadas | [components/study/study-session.tsx](components/study/study-session.tsx) |
+| Agregar o editar una apertura | [scripts/catalog/](scripts/catalog/) + `node scripts/generate-seed.mjs` |
+| Cambiar la detección de aperturas | [lib/external/opening-matcher.ts](lib/external/opening-matcher.ts) y `detection_keys` del catálogo |
+| Agregar un proveedor de partidas | nuevo cliente en [lib/external/](lib/external/) + sumarlo en `analyzeOpenings` |
+| Cambiar colores/tipografías/estética | [app/globals.css](app/globals.css) + [tailwind.config.ts](tailwind.config.ts) |
+| Agregar una página protegida | `app/<ruta>/page.tsx` con el patrón Suspense + `PageFallback` (el proxy ya la protege) |
+| Hacer pública una ruta | `publicPaths` / condición `/auth` en [lib/supabase/proxy.ts](lib/supabase/proxy.ts) |
+| Cambiar datos que ve el Home/Progress | [lib/queries/dashboard.ts](lib/queries/dashboard.ts) |
+| Agregar una columna a una tabla | [supabase/schema.sql](supabase/schema.sql) + espejo en [lib/db/types.ts](lib/db/types.ts) |
+| Simular otro día en dev | cookie `zephyriov-dev-date` (ver [Manejo de fechas](#manejo-de-fechas)) |
