@@ -40,15 +40,12 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
-      });
+      // Email confirmation is disabled in Supabase: sign-up returns an active
+      // session, so the user goes straight into the app (Home routes them to
+      // onboarding on their first visit).
+      const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
-      router.push("/auth/sign-up-success");
+      router.push("/");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

@@ -112,7 +112,7 @@ app/
   settings/page.tsx      Config de sesión, timezone y color por apertura
   onboarding/page.tsx    Conectar usernames → análisis → confirmar aperturas
   auth/                  Login/sign-up/recuperación (plantilla Supabase)
-    confirm/route.ts     Route handler: intercambio del token de email
+    confirm/route.ts     Route handler: canjea el token OTP del reset de contraseña
   manifest.ts            Manifest PWA (generado por Next)
   globals.css            Tokens del design system + clases vintage
 lib/
@@ -166,7 +166,7 @@ Por dónde "entra" la ejecución según el tipo de evento:
 | **Carga de página** | `app/<ruta>/page.tsx` | RSC con `<Suspense fallback={<PageFallback/>}>`; la parte async lee datos y renderiza |
 | **Primer render de la app** | [app/layout.tsx](app/layout.tsx) | Fuentes, tema, `<SwRegister/>` (service worker) |
 | **Mutación desde el cliente** | funciones de `lib/actions/*.ts` | Server actions invocadas como funciones async desde componentes cliente |
-| **Confirmación de email** | [app/auth/confirm/route.ts](app/auth/confirm/route.ts) | Route handler GET que canjea el token OTP |
+| **Link de reset de contraseña** | [app/auth/confirm/route.ts](app/auth/confirm/route.ts) | Route handler GET que canjea el token OTP (`verifyOtp`) y sigue a `next` |
 | **Instalación PWA** | [app/manifest.ts](app/manifest.ts) + [public/sw.js](public/sw.js) | Manifest generado por Next; SW mínimo para installability |
 
 Las páginas protegidas siguen todas el mismo patrón:
@@ -280,6 +280,8 @@ Tres capas independientes:
 3. **RLS en Postgres** (la garantía real): el catálogo es `select`-only para usuarios autenticados; toda tabla de usuario exige `user_id = auth.uid()`. `session_items` y `move_attempts` no llevan `user_id` — heredan la propiedad vía `exists(...)` contra su sesión padre. Aunque el código del servidor tuviera un bug, un usuario no puede leer/escribir filas ajenas.
 
 Los perfiles se crean solos: trigger `on_auth_user_created` → inserta `profiles` con defaults (6 líneas/sesión, bloques de 4, timezone UTC).
+
+**Confirmación de email desactivada**: en Supabase (Auth → Providers → Email) la opción "Confirm email" está apagada, así que `signUp` devuelve una sesión activa de inmediato y [components/sign-up-form.tsx](components/sign-up-form.tsx) redirige directo a `/` (que a su vez manda a `/onboarding` en la primera visita). No hay pantalla intermedia de "revisa tu correo". El route handler [app/auth/confirm/route.ts](app/auth/confirm/route.ts) se conserva porque **sigue en uso para el reset de contraseña** (link del email → `verifyOtp` → `/auth/update-password`). Si algún día se reactiva la confirmación, hay que devolver el `emailRedirectTo` al `signUp` y crear de nuevo una pantalla de aviso.
 
 ## Modelo de datos
 

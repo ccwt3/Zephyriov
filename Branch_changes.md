@@ -30,3 +30,11 @@ Pendiente para probar en vivo: pegar los dos SQL en Supabase, llenar `.env.local
 - Sin cambios de código; solo documentación.
 
 [Listo :v]
+
+## 2026-07-16 — Sign-up sin confirmación de correo
+
+- Con la confirmación de email desactivada en Supabase, `signUp` ya devuelve sesión activa: `components/sign-up-form.tsx` ahora redirige directo a `/` (que enruta a `/onboarding` en la primera visita) en vez de a la pantalla "revisa tu correo". Se quitó también la opción `emailRedirectTo`, que solo servía para el link de confirmación.
+- Eliminada `app/auth/sign-up-success/` — quedaba huérfana (su único enlace era esa redirección) y su texto ya era falso. El route handler `app/auth/confirm/route.ts` se conserva: sigue usándose para el reset de contraseña.
+- Documentado en README (sección Autenticación y seguridad). Verificado: typecheck, lint y build de producción en verde; la página de sign-up renderiza sin errores. El envío del formulario no se probó porque implicaría crear una cuenta real.
+
+[Listo :v]
