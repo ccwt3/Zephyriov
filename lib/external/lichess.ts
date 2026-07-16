@@ -1,4 +1,5 @@
 import type { AnalyzedGame } from "./types";
+import { userAgent } from "./user-agent";
 
 const MAX_GAMES = 300;
 
@@ -22,7 +23,10 @@ export async function fetchLichessGames(
     `?max=${MAX_GAMES}&opening=true&perfType=blitz,rapid,classical`;
 
   const res = await fetch(url, {
-    headers: { Accept: "application/x-ndjson" },
+    headers: {
+      Accept: "application/x-ndjson",
+      "User-Agent": userAgent(),
+    },
     cache: "no-store",
   });
   if (!res.ok) {

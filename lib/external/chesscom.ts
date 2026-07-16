@@ -1,4 +1,5 @@
 import type { AnalyzedGame } from "./types";
+import { userAgent } from "./user-agent";
 
 const MAX_ARCHIVES = 3; // ~3 most recent months
 const MAX_GAMES = 300;
@@ -18,9 +19,13 @@ interface ChesscomGame {
 export async function fetchChesscomGames(
   username: string,
 ): Promise<AnalyzedGame[]> {
+  // Archives are fetched serially (see the loop below): Chess.com rate-limits
+  // parallel requests but leaves serial access unlimited.
+  const headers = { "User-Agent": userAgent() };
+
   const archivesRes = await fetch(
     `https://api.chess.com/pub/player/${encodeURIComponent(username.toLowerCase())}/games/archives`,
-    { cache: "no-store" },
+    { headers, cache: "no-store" },
   );
   if (!archivesRes.ok) {
     throw new Error(
@@ -38,7 +43,7 @@ export async function fetchChesscomGames(
 
   for (const archiveUrl of recent) {
     if (games.length >= MAX_GAMES) break;
-    const res = await fetch(archiveUrl, { cache: "no-store" });
+    const res = await fetch(archiveUrl, { headers, cache: "no-store" });
     if (!res.ok) continue;
     const { games: monthGames = [] } = (await res.json()) as {
       games?: ChesscomGame[];

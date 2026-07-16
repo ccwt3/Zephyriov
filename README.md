@@ -23,7 +23,8 @@ WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente j
 15. [Catálogo de aperturas](#catálogo-de-aperturas)
 16. [Tests](#tests)
 17. [PWA](#pwa)
-18. [Guía rápida: ¿dónde toco para…?](#guía-rápida-dónde-toco-para)
+18. [Licencia y atribuciones](#licencia-y-atribuciones)
+19. [Guía rápida: ¿dónde toco para…?](#guía-rápida-dónde-toco-para)
 
 ---
 
@@ -49,8 +50,11 @@ WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente j
    ```
    NEXT_PUBLIC_SUPABASE_URL=...
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=...
+   APP_CONTACT=tu@correo.com          # opcional pero recomendado
    ```
-   Son las únicas dos variables que usa la app (cliente y servidor). Si faltan, el proxy deja pasar todo sin auth (modo tutorial de la plantilla, ver `hasEnvVars` en [lib/utils.ts](lib/utils.ts)).
+   Las dos primeras son obligatorias (cliente y servidor); si faltan, el proxy deja pasar todo sin auth (modo tutorial de la plantilla, ver `hasEnvVars` en [lib/utils.ts](lib/utils.ts)).
+
+   `APP_CONTACT` (solo servidor) viaja en el `User-Agent` hacia Lichess y Chess.com: es lo que Chess.com usa para contactarte antes de bloquear la app si detecta algo raro. Sin ella las peticiones siguen funcionando, solo van sin contacto. Si despliegas en Vercel, añádela también ahí.
 3. **Correr**:
    ```
    pnpm install
@@ -132,6 +136,7 @@ lib/
     lichess.ts             ndjson de partidas recientes
     chesscom.ts            Archivos mensuales públicos
     opening-matcher.ts     Match de tags contra el catálogo (clave más larga gana)
+    user-agent.ts          User-Agent con contacto (APP_CONTACT) para ambas APIs
   supabase/              Clientes SSR de la plantilla
     client.ts              createBrowserClient (componentes cliente)
     server.ts              createServerClient con cookies (RSC/actions)
@@ -356,6 +361,8 @@ Dos APIs públicas, **sin tokens ni API keys** ([lib/external/](lib/external/)):
 
 Ambos se piden con `cache: "no-store"` y `Promise.allSettled`: si una fuente falla, la otra sigue y el error se reporta como aviso (`sourceErrors`), no como excepción — salvo que fallen las dos.
 
+**Cumplimiento**: los dos clientes mandan `User-Agent: Zephyriov (+APP_CONTACT)` ([user-agent.ts](lib/external/user-agent.ts)). Chess.com limita solo las peticiones **en paralelo**, así que `chesscom.ts` pide los archivos mensuales **en serie** (bucle con `await`) — el acceso serial es ilimitado según su documentación.
+
 **Matcher** ([opening-matcher.ts](lib/external/opening-matcher.ts)): normaliza los nombres (minúsculas, solo `[a-z0-9]`) y compara contra las `detection_keys` del catálogo; **la clave coincidente más larga gana** ("Fantasy Variation" le gana a "Caro-Kann"). Después cuenta partidas por (apertura, color), filtra por `playable_colors` y devuelve el top 3 de cada color — sin repetir una apertura en ambos colores.
 
 ## Manejo de fechas
@@ -426,6 +433,33 @@ Vitest cubre el motor SRS puro ([lib/srs/__tests__/](lib/srs/__tests__/)): calif
 - [public/sw.js](public/sw.js): service worker mínimo — existe para cumplir el criterio de instalabilidad, no cachea de forma agresiva.
 - [components/sw-register.tsx](components/sw-register.tsx): lo registra en el cliente; su fallo es no-fatal.
 
+## Licencia y atribuciones
+
+Zephyriov se distribuye bajo la **[licencia MIT](LICENSE)**. Dos documentos de apoyo:
+
+| Documento | Para qué |
+|---|---|
+| **[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)** | Qué usamos y bajo qué licencia: dependencias, tipografías, arte de las piezas, APIs, catálogo |
+| **[LICENSING.md](LICENSING.md)** | Estrategia: cómo migrar a BSL si algún día se comercializa, y qué faltaría para vender |
+
+Lo que conviene saber sin abrir ninguno de los dos:
+
+- **Las piezas del tablero no son arte de `react-chessboard`**: son el set de **Cburnett** (Wikimedia Commons), multi-licenciado. Zephyriov las usa bajo la **opción BSD 3-Clause**, que es la única sin copyleft/ShareAlike — eso mantiene el proyecto MIT limpio y permite un futuro cambio a BSL. La atribución es obligatoria; usar el nombre del autor para promocionar, no.
+- **`chess.js` es BSD-2-Clause**, no MIT — su aviso de copyright debe viajar con cada distribución.
+- **Las fuentes se auto-hospedan** (`next/font`), así que las redistribuimos: Alfa Slab One, Oswald y Geist son **SIL OFL 1.1**.
+- **Nada de lo que se distribuye es GPL/AGPL.** El software de Lichess es AGPL, pero solo consumimos su API por HTTP — eso no dispara la AGPL. **No copiar código de lila** o el proyecto tendría que volverse AGPL.
+- **Uso comercial permitido** por los ToS de Lichess. Chess.com pide respetar su IP (paletas, diseños de piezas, sonidos) — no usamos nada de eso.
+
+- **Cumplimiento de APIs**: ambos clientes mandan un `User-Agent` identificando la app ([lib/external/user-agent.ts](lib/external/user-agent.ts)). Define **`APP_CONTACT`** para que Chess.com pueda avisarte antes de bloquear la app; sin esa variable el header sale sin contacto.
+
+### Mantener la puerta abierta a BSL
+
+El proyecto puede relicenciarse a BSL en cualquier momento **porque hay un solo titular del copyright**. Lo único que hay que cuidar activamente para no perder esa opción:
+
+> **No mergear PRs externos sin acuerdo previo.** El autor de un aporte conserva su copyright: bajo MIT puedes usarlo, pero **no relicenciarlo a BSL** sin su permiso. Mientras el proyecto sea de un solo autor no hay nada que hacer; el día que llegue el primer PR, ver [LICENSING.md §2](LICENSING.md#2-la-única-base-que-hay-que-mantener-contribuciones).
+
+Lo demás ya está puesto: cero copyleft en runtime, piezas bajo BSD-3, fuentes OFL (empaquetables comercialmente) y Lichess con uso comercial permitido. Al agregar dependencias o assets, corre `pnpm licenses list --prod` y actualiza las notas — ver [THIRD-PARTY-NOTICES §12](THIRD-PARTY-NOTICES.md#12-cómo-regenerar-este-inventario).
+
 ## Guía rápida: ¿dónde toco para…?
 
 | Quiero… | Archivo(s) |
@@ -444,3 +478,7 @@ Vitest cubre el motor SRS puro ([lib/srs/__tests__/](lib/srs/__tests__/)): calif
 | Cambiar datos que ve el Home/Progress | [lib/queries/dashboard.ts](lib/queries/dashboard.ts) |
 | Agregar una columna a una tabla | [supabase/schema.sql](supabase/schema.sql) + espejo en [lib/db/types.ts](lib/db/types.ts) |
 | Simular otro día en dev | cookie `zephyriov-dev-date` (ver [Manejo de fechas](#manejo-de-fechas)) |
+| Agregar una dependencia o un asset | `pnpm licenses list --prod` + anotar en [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) (rechaza GPL/AGPL/CC BY-SA en runtime) |
+| Cambiar la licencia del proyecto | [LICENSE](LICENSE) + la guía de migración en [LICENSING.md §4](LICENSING.md#4-cómo-migrar-a-bsl-11-cuando-toque) |
+| Aceptar el primer PR externo | [LICENSING.md §2](LICENSING.md#2-la-única-base-que-hay-que-mantener-contribuciones) **antes** de mergear |
+| Empezar a cobrar por la app | Checklist en [LICENSING.md §5](LICENSING.md#5-qué-falta-para-que-sea-comerciable) |

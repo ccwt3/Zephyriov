@@ -38,3 +38,32 @@ Pendiente para probar en vivo: pegar los dos SQL en Supabase, llenar `.env.local
 - Documentado en README (sección Autenticación y seguridad). Verificado: typecheck, lint y build de producción en verde; la página de sign-up renderiza sin errores. El envío del formulario no se probó porque implicaría crear una cuenta real.
 
 [Listo :v]
+
+## 2026-07-16 — Licenciamiento y atribuciones
+
+- `LICENSE`: MIT (titular `MoyyyL` — **confirmar el nombre legal**), con nota de que no cubre dependencias/assets de terceros.
+- `THIRD-PARTY-NOTICES.md` nuevo: inventario completo verificado contra los paquetes instalados (`pnpm licenses list`) y contra los términos publicados de cada proveedor. Cubre dependencias de runtime y build, tipografías, arte de piezas, plantilla/shadcn, APIs, catálogo, inspiración de diseño y checklist para migrar a BSL.
+- **Hallazgo importante**: las piezas del tablero no son arte de `react-chessboard` (MIT) — son el set **Cburnett** de Wikimedia Commons, incorporado sin atribución upstream. Está multi-licenciado (GFDL / CC BY-SA 3.0 / GPLv2+ / **BSD-3-Clause**); el proyecto elige explícitamente **BSD-3-Clause** para evitar ShareAlike y dejar viable un futuro BSL.
+- Otros puntos no obvios documentados: `chess.js` es BSD-2-Clause (no MIT); las fuentes se auto-hospedan y por tanto se redistribuyen bajo OFL 1.1; la AGPL de Lichess no aplica por consumir su API vía HTTP (solo si se copiara código de lila); Chess.com exige respetar su IP de piezas/paletas (no usamos ninguna); el catálogo es contenido original asistido por IA (nota sobre protegibilidad).
+- `package.json`: agregado `"license": "MIT"`. README: sección "Licencia y atribuciones" + entradas en la guía rápida.
+[Listo :v]
+
+## 2026-07-16 — User-Agent para las APIs de ajedrez
+
+- `lib/external/user-agent.ts` nuevo: construye `Zephyriov (+<APP_CONTACT>)`. El contacto sale de la variable de entorno **`APP_CONTACT`** en vez de estar hardcodeado, para no publicar un correo personal en un repo abierto; sin la variable el header identifica la app pero sin contacto.
+- Aplicado a los dos clientes: `chesscom.ts` (ambas peticiones: archives + archivos mensuales) y `lichess.ts` (no lo exige, pero identificarse con un servidor sin fines de lucro es lo correcto).
+- Documentado en `.env.example`, README (setup, proveedores, módulos, licencias) y THIRD-PARTY-NOTICES §8.
+- Verificado interceptando `fetch` con un test temporal de Vitest: con `APP_CONTACT` ambos hosts reciben `Zephyriov (+dev@example.com)`; sin ella, `Zephyriov`. Test borrado tras verificar. Suite completa (25 tests), typecheck y lint en verde.
+
+[Listo :v]
+
+## 2026-07-16 — Bases para BSL y checklist de comercialización
+
+- `LICENSING.md` nuevo: estrategia de licencia, separada del inventario de terceros. Cubre (1) por qué hoy se puede relicenciar —titular único— y los 4 riesgos que lo romperían, (2) la política de contribuciones, (3) las bases ya puestas, (4) guía de migración a BSL 1.1 y (5) checklist de comercialización.
+- **La base clave**: mientras haya un solo autor no hay nada que hacer, pero **mergear un PR externo sin acuerdo previo cierra la puerta a BSL** (el contribuidor conserva su copyright y bajo MIT no se puede relicenciar sin su permiso). Documentadas las 3 salidas: no aceptar PRs (recomendado hoy), DCO o CLA. También anotado que el MIT ya publicado es irrevocable para esas versiones: BSL solo aplica hacia adelante.
+- Parámetros de BSL 1.1 verificados contra el texto oficial y la FAQ de MariaDB: Change Date máx. 4 años desde la primera distribución pública; Change License debe ser GPLv2+ o compatible (**MIT lo es**, así que puede "volver" a MIT); no es OSI-approved.
+- Checklist de comercialización (nada bloqueante para desplegar): nombre legal en LICENSE, entidad, marca; **Aviso de Privacidad (LFPDPPP) y borrado/exportación de cuenta** —hoy no existen en la app y son lo primero que haría falta desde el primer usuario ajeno—; consulta a `legal@chess.com`; planes de pago + DPA de Supabase/Vercel; página `/licenses` in-app (necesaria si el repo se cierra bajo BSL); ToS; pagos; `SECURITY.md`; proyecto Supabase separado para prod.
+- THIRD-PARTY-NOTICES §11 recortado para no duplicar: ahora solo lo que se deriva del inventario y apunta a LICENSING.md. README con tabla de los tres documentos y entradas nuevas en la guía rápida.
+- Verificado: los 108 enlaces internos de los 4 documentos resuelven (incluidos anchors, con el algoritmo de slug de GitHub).
+
+[Listo :v]
