@@ -1,5 +1,16 @@
 # Branch changes
 
+## 2026-07-16 — Fix del setup congelado + librería de aperturas, UX de estudio y preferencias de análisis
+
+- **Fix: onboarding congelado al confirmar.** `confirmOpenings` ahora redirige a `/` desde el servidor (tras escribir `onboarded_at`) y revisa los errores de sus updates que antes se tragaba. En el cliente, el error `NEXT_REDIRECT` que toda action con `redirect()` lanza se reconoce y se ignora (el router navega solo); antes se pintaba en pantalla y su `setState` abortaba la navegación.
+- **Librería de aperturas (`/library`)**: catálogo completo con las 4 líneas de cada apertura en notación de texto (`lib/notation.ts`, con tests). Add/remove al estudio (`lib/actions/library.ts`): quitar conserva el progreso (`is_active = false`); re-agregar con el mismo color lo recupera, con el color contrario lo resetea. Al quitar una apertura con líneas pendientes hoy, sus `session_items` se borran y la sesión se recalcula (sin esto quedaba incompletable). Sustituir = remove + add. Link "Library" en el header y en Settings.
+- **Onboarding con dos modos**: "Analyze my games" (flujo original) y "Build my own" (checkboxes sobre el catálogo, `opening-picker.tsx`). Ambos alimentan la misma selección — se pueden mezclar.
+- **Sesión de estudio**: la explicación de la última jugada ya no es reemplazada por el panel de calificación — coexisten. El panel ahora dice cuándo vuelve la línea con la fecha real del scheduler (`nextDue` en `SubmitResult`; null cuando repite en la misma sesión, lo que también evita mostrar la fecha vieja del lapse).
+- **Time controls configurables**: columna `profiles.analysis_time_controls` (default `{blitz,rapid,slow}` = comportamiento original; `slow` = classical en Lichess, daily en Chess.com). Chips en onboarding y Settings; el análisis los persiste. Plataforma = username (campo vacío = no analizar; sin columnas nuevas). **Pendiente: ejecutar `supabase/migrations/2026-07-16-analysis-time-controls.sql` en el SQL editor** (la base ya existía).
+- Verificado: typecheck, lint, 29 tests de Vitest y build de producción en verde. Los flujos autenticados (library, onboarding manual, sesión) quedan por probar en vivo tras correr la migración.
+
+[Listo :v]
+
 ## 2026-07-14 — Construcción inicial completa de Zephyriov
 
 - Scaffold con la plantilla oficial next+supabase (pnpm), tema vintage blanco + rojo vino, tipografía serif para títulos.

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { updateSettings } from "@/lib/actions/settings";
+import type { AnalysisTimeControl } from "@/lib/db/types";
+import { TimeControlPicker } from "@/components/time-control-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,12 +13,14 @@ interface Props {
   linesPerSession: number;
   movesPerBlock: number;
   timezone: string;
+  timeControls: AnalysisTimeControl[];
 }
 
 export function SettingsForm(props: Props) {
   const [linesPerSession, setLinesPerSession] = useState(props.linesPerSession);
   const [movesPerBlock, setMovesPerBlock] = useState(props.movesPerBlock);
   const [timezone, setTimezone] = useState(props.timezone);
+  const [timeControls, setTimeControls] = useState(props.timeControls);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -24,7 +28,12 @@ export function SettingsForm(props: Props) {
     setSaving(true);
     setMessage(null);
     try {
-      await updateSettings({ linesPerSession, movesPerBlock, timezone });
+      await updateSettings({
+        linesPerSession,
+        movesPerBlock,
+        timezone,
+        timeControls,
+      });
       setMessage("Saved.");
     } catch (e) {
       setMessage(e instanceof Error ? e.message : String(e));
@@ -66,6 +75,14 @@ export function SettingsForm(props: Props) {
       </div>
 
       <div className="grid gap-2">
+        <Label>Time controls to analyze</Label>
+        <TimeControlPicker value={timeControls} onChange={setTimeControls} />
+        <p className="text-xs text-muted-foreground">
+          Applies the next time you re-analyze your games.
+        </p>
+      </div>
+
+      <div className="grid gap-2">
         <Label htmlFor="tz">Timezone</Label>
         <Input
           id="tz"
@@ -87,8 +104,13 @@ export function SettingsForm(props: Props) {
         Want different openings?{" "}
         <Link href="/onboarding" className="text-primary underline">
           Re-analyze your games
-        </Link>
-        . Openings that stay selected keep their progress.
+        </Link>{" "}
+        or browse the{" "}
+        <Link href="/library" className="text-primary underline">
+          opening library
+        </Link>{" "}
+        to add or remove openings by hand. Openings that stay selected keep
+        their progress.
       </p>
     </section>
   );

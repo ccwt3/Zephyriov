@@ -1,9 +1,17 @@
 import type { AnalyzedGame } from "./types";
+import type { AnalysisTimeControl } from "@/lib/db/types";
 import { userAgent } from "./user-agent";
 
 const MAX_ARCHIVES = 3; // ~3 most recent months
 const MAX_GAMES = 300;
-const TIME_CLASSES = new Set(["blitz", "rapid", "daily"]);
+
+// "slow" means daily here (Chess.com's correspondence-style games).
+const TIME_CLASS: Record<AnalysisTimeControl, string> = {
+  bullet: "bullet",
+  blitz: "blitz",
+  rapid: "rapid",
+  slow: "daily",
+};
 
 interface ChesscomGame {
   pgn?: string;
@@ -18,10 +26,12 @@ interface ChesscomGame {
  */
 export async function fetchChesscomGames(
   username: string,
+  timeControls: AnalysisTimeControl[],
 ): Promise<AnalyzedGame[]> {
   // Archives are fetched serially (see the loop below): Chess.com rate-limits
   // parallel requests but leaves serial access unlimited.
   const headers = { "User-Agent": userAgent() };
+  const timeClasses = new Set(timeControls.map((tc) => TIME_CLASS[tc]));
 
   const archivesRes = await fetch(
     `https://api.chess.com/pub/player/${encodeURIComponent(username.toLowerCase())}/games/archives`,
@@ -51,7 +61,7 @@ export async function fetchChesscomGames(
 
     for (const game of monthGames) {
       if (games.length >= MAX_GAMES) break;
-      if (!game.time_class || !TIME_CLASSES.has(game.time_class)) continue;
+      if (!game.time_class || !timeClasses.has(game.time_class)) continue;
       const opening = extractOpening(game.pgn ?? "");
       if (!opening.name) continue;
 

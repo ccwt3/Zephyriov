@@ -36,6 +36,14 @@ function pliesForBlock(studentMoves: number, color: ChessColor): number {
   return color === "white" ? studentMoves * 2 - 1 : studentMoves * 2;
 }
 
+/** Whole days between two yyyy-mm-dd dates (UTC-pure, DST-proof). */
+function diffDays(from: string, to: string): number {
+  return Math.round(
+    (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) /
+      86_400_000,
+  );
+}
+
 async function loadLineContexts(
   supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
   userId: string,
@@ -341,8 +349,14 @@ export async function submitLineResult(
   const sessionCompleted = await maybeCompleteSession(supabase, item.session_id);
   await updateStreak(supabase, userId, item.session_id, today, sessionCompleted);
 
+  // When the line repeats in this session there is no meaningful new date
+  // (a review lapse even keeps the OLD due date), so expose null instead.
+  const nextDue = repeatInSession
+    ? null
+    : { date: updated.dueDate, inDays: diffDays(today, updated.dueDate) };
+
   revalidatePath("/");
-  return { grade, repeatInSession, requeuedItem, sessionCompleted };
+  return { grade, repeatInSession, nextDue, requeuedItem, sessionCompleted };
 }
 
 async function maybeCompleteSession(

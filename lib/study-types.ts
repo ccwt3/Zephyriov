@@ -34,6 +34,8 @@ export interface StudyMoveResult {
 export interface SubmitResult {
   grade: Grade;
   repeatInSession: boolean;
+  /** Next scheduled review; null when the line repeats in this session. */
+  nextDue: { date: string; inDays: number } | null;
   /** Present when the line was re-queued: the client appends it to its queue. */
   requeuedItem: StudyItem | null;
   sessionCompleted: boolean;

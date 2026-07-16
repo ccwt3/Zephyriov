@@ -32,6 +32,7 @@ async function SettingsContent() {
           linesPerSession={data.profile.lines_per_session}
           movesPerBlock={data.profile.moves_per_block}
           timezone={data.profile.timezone}
+          timeControls={data.profile.analysis_time_controls}
         />
 
         <OpeningColorList

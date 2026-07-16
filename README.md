@@ -21,10 +21,11 @@ WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente j
 13. [El tablero de estudio](#el-tablero-de-estudio)
 14. [UI: diseño vintage](#ui-diseño-vintage)
 15. [Catálogo de aperturas](#catálogo-de-aperturas)
-16. [Tests](#tests)
-17. [PWA](#pwa)
-18. [Licencia y atribuciones](#licencia-y-atribuciones)
-19. [Guía rápida: ¿dónde toco para…?](#guía-rápida-dónde-toco-para)
+16. [Librería de aperturas](#librería-de-aperturas)
+17. [Tests](#tests)
+18. [PWA](#pwa)
+19. [Licencia y atribuciones](#licencia-y-atribuciones)
+20. [Guía rápida: ¿dónde toco para…?](#guía-rápida-dónde-toco-para)
 
 ---
 
@@ -46,6 +47,7 @@ WebApp/PWA mobile-first para aprender las aperturas de ajedrez **que realmente j
 1. **Supabase**: crea un proyecto y ejecuta en el SQL editor, en orden:
    - [supabase/schema.sql](supabase/schema.sql) — enums, tablas, RLS y triggers (una sola vez).
    - [supabase/seed.sql](supabase/seed.sql) — catálogo curado de aperturas (una sola vez; **regenerable**, ver [Catálogo](#catálogo-de-aperturas)).
+   - Si tu base **ya existía** antes de un cambio de schema, ejecuta los ALTERs de [supabase/migrations/](supabase/migrations/) que le falten (cada archivo indica qué agrega).
 2. **Variables de entorno**: copia `.env.example` a `.env.local` y llena:
    ```
    NEXT_PUBLIC_SUPABASE_URL=...
@@ -113,8 +115,9 @@ app/
   page.tsx               Home: streak + botón de sesión diaria + progreso
   study/page.tsx         Sesión de estudio (crea/reanuda la sesión del día)
   progress/page.tsx      Detalle de progreso por apertura/línea
-  settings/page.tsx      Config de sesión, timezone y color por apertura
-  onboarding/page.tsx    Conectar usernames → análisis → confirmar aperturas
+  library/page.tsx       Librería: todo el catálogo, agregar/quitar del estudio
+  settings/page.tsx      Config de sesión, time controls, timezone y color
+  onboarding/page.tsx    Analizar partidas o armar repertorio a mano → confirmar
   auth/                  Login/sign-up/recuperación (plantilla Supabase)
     confirm/route.ts     Route handler: canjea el token OTP del reset de contraseña
   manifest.ts            Manifest PWA (generado por Next)
@@ -129,9 +132,12 @@ lib/
     auth-helpers.ts        requireUser(): client + userId + profile
     session.ts             Crear sesión del día, calificar bloques, streak
     onboarding.ts          Analizar partidas, confirmar aperturas, cambiar color
+    library.ts             addOpening / removeOpening (librería)
     settings.ts            Guardar preferencias
   queries/
     dashboard.ts           getDashboardData(): lectura agregada para Home/Progress/Settings
+    library.ts             getLibraryData(): catálogo completo + estado "en estudio"
+  notation.ts            formatLineNotation(): plies → "1.e4 e5 2.Nf3" (+ test)
   external/              Clientes de APIs públicas (sin tokens)
     lichess.ts             ndjson de partidas recientes
     chesscom.ts            Archivos mensuales públicos
@@ -146,7 +152,9 @@ lib/
   study-types.ts         Contratos cliente↔servidor de la sesión de estudio
 components/
   study/                 StudySession (tablero + quiz), MoveTimer, GradeBadge
-  onboarding/, settings/ Flujos cliente
+  onboarding/, settings/ Flujos cliente (incluye OpeningPicker del modo manual)
+  library/               LibraryList: cards del catálogo con add/remove
+  time-control-picker.tsx Chips de time controls (onboarding y settings)
   ui/                    Base shadcn restilizada (button, card, input, label…)
   app-header.tsx         Franja de navegación
   streak-seal.tsx        Sello dentado SVG de la racha
@@ -159,6 +167,7 @@ scripts/
   generate-icons.mjs     Genera los iconos PWA con sharp
 supabase/
   schema.sql, seed.sql   SQL listo para pegar en la consola de Supabase
+  migrations/            ALTERs incrementales para bases que ya existían
 ```
 
 ## Entry points
@@ -244,16 +253,24 @@ Browser ── GET / ──▶ proxy.ts
 
 ### C) Onboarding
 
+Dos modos que alimentan la misma lista de selecciones (se pueden mezclar):
+
 ```
-OnboardingFlow (cliente)
-  → analyzeOpenings(lichess, chesscom)      [lib/actions/onboarding.ts]
+OnboardingFlow (cliente) — tab "Analyze my games"
+  → analyzeOpenings(lichess, chesscom, timeControls)  [lib/actions/onboarding.ts]
+      persiste usernames + analysis_time_controls en profiles
       Promise.allSettled(fetchLichessGames, fetchChesscomGames)
       → suggestOpenings(games, catálogo)    [lib/external/opening-matcher.ts]
-      (no persiste nada; una fuente caída no rompe la otra)
+      (no persiste selección; una fuente caída no rompe la otra)
+
+OnboardingFlow (cliente) — tab "Build my own"
+  → OpeningPicker: checkboxes sobre el catálogo completo (getLibraryData)
+      agrega selecciones con gamesCount 0, color = principal de la apertura
+
   → usuario ajusta colores → confirmOpenings(selections)
       desactiva selección previa, upsert user_openings,
       crea user_lines faltantes (las que sobreviven conservan progreso),
-      marca profiles.onboarded_at → redirect a /
+      marca profiles.onboarded_at → redirect("/") server-side
 ```
 
 ## Sistema de llamadas (cliente ↔ servidor)
@@ -316,7 +333,7 @@ user_streaks
 
 | Tabla | Qué guarda |
 |---|---|
-| `profiles` | Usernames externos, preferencias (`lines_per_session`, `moves_per_block`, `timezone`), `onboarded_at` |
+| `profiles` | Usernames externos, preferencias (`lines_per_session`, `moves_per_block`, `analysis_time_controls`, `timezone`), `onboarded_at` |
 | `user_openings` | Las aperturas elegidas + color de estudio. `is_active` permite re-onboarding sin perder historial |
 | `user_lines` | **La tarjeta SRS**: `state` (new/review), `unlocked_moves`, `interval_days`, `due_date`, `reps`, `lapses`, `last_result` |
 | `study_sessions` | Una por usuario por día (`unique(user_id, session_date)`) |
@@ -356,8 +373,19 @@ Dos APIs públicas, **sin tokens ni API keys** ([lib/external/](lib/external/)):
 
 | Proveedor | Endpoint | Detalles |
 |---|---|---|
-| Lichess | `GET lichess.org/api/games/user/{u}?max=300&opening=true&perfType=blitz,rapid,classical` | ndjson; el tag de apertura viene en cada partida |
-| Chess.com | `GET api.chess.com/pub/player/{u}/games/archives` → últimos 3 archivos mensuales | máx. 300 partidas blitz/rapid/daily; la apertura se extrae del header `ECOUrl` del PGN |
+| Lichess | `GET lichess.org/api/games/user/{u}?max=300&opening=true&perfType=…` | ndjson; el tag de apertura viene en cada partida |
+| Chess.com | `GET api.chess.com/pub/player/{u}/games/archives` → últimos 3 archivos mensuales | máx. 300 partidas; la apertura se extrae del header `ECOUrl` del PGN |
+
+**Time controls configurables**: `profiles.analysis_time_controls` guarda qué ritmos se analizan (default `{blitz,rapid,slow}`, que replica el comportamiento original). El vocabulario unificado colapsa la asimetría entre APIs; `correspondence` de Lichess queda fuera deliberadamente:
+
+| Preferencia | Lichess `perfType` | Chess.com `time_class` |
+|---|---|---|
+| `bullet` | bullet | bullet |
+| `blitz` | blitz | blitz |
+| `rapid` | rapid | rapid |
+| `slow` | classical | daily |
+
+**Plataformas**: no hay switch propio — el username es el switch. Dejar un campo vacío en el formulario = no analizar esa plataforma (y el `null` persiste para futuros re-análisis). Se decidió así para no duplicar la verdad ni crear estados inválidos (plataforma "activa" sin username).
 
 Ambos se piden con `cache: "no-store"` y `Promise.allSettled`: si una fuente falla, la otra sigue y el error se reporta como aviso (`sourceErrors`), no como excepción — salvo que fallen las dos.
 
@@ -419,6 +447,16 @@ export default {
 
 **Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs`, corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados) y re-ejecuta `supabase/seed.sql` en Supabase.
 
+## Librería de aperturas
+
+`/library` (link "Library" en el header) muestra el catálogo completo — cada apertura con su ECO, colores jugables y las 4 líneas en notación de texto (generada por [lib/notation.ts](lib/notation.ts)) — y permite gestionar el estudio a mano, como alternativa o complemento al análisis automático:
+
+- **Add to my studies** ([lib/actions/library.ts](lib/actions/library.ts) `addOpening`): upsert de `user_openings` (sin tocar el resto de la selección, a diferencia de `confirmOpenings`) + creación de las tarjetas SRS faltantes.
+- **Remove from studies** (`removeOpening`): marca `is_active = false`. Las `user_lines` **no se tocan**: re-agregar la apertura con el mismo color recupera el progreso; con el color contrario, se resetea (las jugadas calificadas cambian de lado). Si se quita una apertura con líneas pendientes en la sesión de hoy, esos `session_items` se borran y el estado de la sesión se recalcula — sin esto la sesión quedaría incompletable.
+- **Sustituir** una apertura auto-detectada = Remove + Add en la misma página.
+
+En onboarding, el tab **"Build my own"** usa el mismo catálogo ([components/onboarding/opening-picker.tsx](components/onboarding/opening-picker.tsx)) para armar el repertorio sin analizar partidas; ambos tabs alimentan la misma selección, así que se pueden mezclar. Nota: `/library` es accesible antes de completar el onboarding pero no marca `onboarded_at` — el Home seguirá llevando a `/onboarding` hasta confirmar ahí (un solo punto de verdad).
+
 ## Tests
 
 ```
@@ -470,6 +508,8 @@ Lo demás ya está puesto: cero copyleft en runtime, piezas bajo BSD-3, fuentes 
 | Cambiar la regla del streak | `updateStreak` en [lib/actions/session.ts](lib/actions/session.ts) |
 | Tocar el tablero / interacción de jugadas | [components/study/study-session.tsx](components/study/study-session.tsx) |
 | Agregar o editar una apertura | [scripts/catalog/](scripts/catalog/) + `node scripts/generate-seed.mjs` |
+| Tocar la librería (add/remove de aperturas) | [lib/actions/library.ts](lib/actions/library.ts) + [lib/queries/library.ts](lib/queries/library.ts) + [components/library/](components/library/) |
+| Cambiar los time controls analizados | `analysis_time_controls` en [supabase/schema.sql](supabase/schema.sql), mapeos en [lib/external/lichess.ts](lib/external/lichess.ts) / [chesscom.ts](lib/external/chesscom.ts), UI en [components/time-control-picker.tsx](components/time-control-picker.tsx) |
 | Cambiar la detección de aperturas | [lib/external/opening-matcher.ts](lib/external/opening-matcher.ts) y `detection_keys` del catálogo |
 | Agregar un proveedor de partidas | nuevo cliente en [lib/external/](lib/external/) + sumarlo en `analyzeOpenings` |
 | Cambiar colores/tipografías/estética | [app/globals.css](app/globals.css) + [tailwind.config.ts](tailwind.config.ts) |

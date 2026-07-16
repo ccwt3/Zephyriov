@@ -89,6 +89,10 @@ create table public.profiles (
   chesscom_username text,
   lines_per_session smallint not null default 6 check (lines_per_session between 1 and 12),
   moves_per_block smallint not null default 4 check (moves_per_block between 2 and 10),
+  -- Time controls analyzed when suggesting openings. "slow" maps to
+  -- lichess "classical" and chess.com "daily" (correspondence stays out).
+  analysis_time_controls text[] not null default '{blitz,rapid,slow}'
+    check (analysis_time_controls <@ array['bullet','blitz','rapid','slow']),
   timezone text not null default 'UTC',
   onboarded_at timestamptz,
   created_at timestamptz not null default now(),

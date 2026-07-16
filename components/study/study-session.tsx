@@ -12,7 +12,11 @@ import {
 import { submitLineResult } from "@/lib/actions/session";
 import { SLOW_THRESHOLD_MS } from "@/lib/srs/grading";
 import type { Grade } from "@/lib/srs/types";
-import type { StudyItem, StudyMoveResult } from "@/lib/study-types";
+import type {
+  StudyItem,
+  StudyMoveResult,
+  SubmitResult,
+} from "@/lib/study-types";
 import { Button } from "@/components/ui/button";
 import { MoveTimer } from "./move-timer";
 import { GradeBadge } from "./grade-badge";
@@ -32,6 +36,24 @@ interface Props {
 
 const OPPONENT_MOVE_DELAY_MS = 600;
 const WRONG_MOVE_REVEAL_DELAY_MS = 900;
+
+/** Copy under the grade badge: when this line will be seen again. */
+function nextReviewLabel(
+  grade: Grade,
+  willRepeat: boolean,
+  nextDue: SubmitResult["nextDue"],
+): string {
+  if (willRepeat) {
+    return "You'll see this line again later in this session.";
+  }
+  const when =
+    !nextDue || nextDue.inDays <= 1
+      ? "tomorrow"
+      : `in ${nextDue.inDays} days (${nextDue.date})`;
+  return grade === "good"
+    ? `Every move correct — this line levels up. Next review ${when}.`
+    : `Almost — this line comes back ${when}.`;
+}
 
 /* Vintage board: cream and soda-fountain teal, matching the app palette. */
 const BOARD_LIGHT = "#f0e3c1";
@@ -83,6 +105,7 @@ function LineQuiz({
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [grade, setGrade] = useState<Grade | null>(null);
   const [willRepeat, setWillRepeat] = useState(false);
+  const [nextDue, setNextDue] = useState<SubmitResult["nextDue"]>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [moveStartedAt, setMoveStartedAt] = useState<number>(Date.now());
@@ -127,6 +150,7 @@ function LineQuiz({
       .then((res) => {
         setGrade(res.grade);
         setWillRepeat(res.repeatInSession);
+        setNextDue(res.nextDue);
         requeuedRef.current = res.requeuedItem;
       })
       .catch((e: Error) => setError(e.message))
@@ -313,7 +337,9 @@ function LineQuiz({
             : "Opponent is thinking…"}
       </p>
 
-      {feedback && grade === null && (
+      {/* Stays visible alongside the grade panel so the last explanation
+          isn't replaced the moment the grade arrives. */}
+      {feedback && (
         <div
           className={`rounded-sm border-2 p-3 text-sm shadow-press-sm ${
             feedback.correct
@@ -343,14 +369,7 @@ function LineQuiz({
         <div className="card-vintage flex flex-col items-center gap-3 p-4">
           <GradeBadge grade={grade} />
           <p className="text-center text-sm text-muted-foreground">
-            {grade === "good" &&
-              "Every move correct and on time. This line levels up."}
-            {grade === "mid" &&
-              (willRepeat
-                ? "Almost — you'll see this line again in this session."
-                : "Almost — this line comes back tomorrow.")}
-            {grade === "bad" &&
-              "You'll get another shot at this line later in this session."}
+            {nextReviewLabel(grade, willRepeat, nextDue)}
           </p>
           <Button
             className="w-full"

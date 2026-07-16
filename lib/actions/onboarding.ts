@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { fetchLichessGames } from "@/lib/external/lichess";
 import { fetchChesscomGames } from "@/lib/external/chesscom";
 import {
@@ -9,8 +10,14 @@ import {
   type OpeningSuggestion,
 } from "@/lib/external/opening-matcher";
 import type { AnalyzedGame } from "@/lib/external/types";
-import type { ChessColor, OpeningLine } from "@/lib/db/types";
+import type {
+  AnalysisTimeControl,
+  ChessColor,
+  OpeningLine,
+} from "@/lib/db/types";
 import { requireUser } from "./auth-helpers";
+
+const TIME_CONTROLS: AnalysisTimeControl[] = ["bullet", "blitz", "rapid", "slow"];
 
 export interface AnalyzeResult {
   suggestions: OpeningSuggestion[];
@@ -26,6 +33,7 @@ export interface AnalyzeResult {
 export async function analyzeOpenings(
   lichessUsername: string,
   chesscomUsername: string,
+  timeControls: AnalysisTimeControl[],
 ): Promise<AnalyzeResult> {
   const { supabase, userId } = await requireUser();
 
@@ -34,16 +42,24 @@ export async function analyzeOpenings(
   if (!lichess && !chesscom) {
     throw new Error("Provide at least one username");
   }
+  const controls = TIME_CONTROLS.filter((tc) => timeControls.includes(tc));
+  if (controls.length === 0) {
+    throw new Error("Select at least one time control");
+  }
 
-  // Persist usernames so re-analysis is one click later.
+  // Persist usernames and time controls so re-analysis is one click later.
   await supabase
     .from("profiles")
-    .update({ lichess_username: lichess || null, chesscom_username: chesscom || null })
+    .update({
+      lichess_username: lichess || null,
+      chesscom_username: chesscom || null,
+      analysis_time_controls: controls,
+    })
     .eq("user_id", userId);
 
   const results = await Promise.allSettled([
-    lichess ? fetchLichessGames(lichess) : Promise.resolve([]),
-    chesscom ? fetchChesscomGames(chesscom) : Promise.resolve([]),
+    lichess ? fetchLichessGames(lichess, controls) : Promise.resolve([]),
+    chesscom ? fetchChesscomGames(chesscom, controls) : Promise.resolve([]),
   ]);
 
   const games: AnalyzedGame[] = [];
@@ -84,10 +100,14 @@ export interface OpeningSelection {
  * Persists the chosen openings and creates the SRS cards (user_lines) for
  * every line of each opening. Re-running replaces the previous selection;
  * cards of openings that stay selected keep their progress.
+ *
+ * Redirects to Home on success — the navigation happens server-side, after
+ * onboarded_at is written, so the client can't land on Home before the flag
+ * exists (which would bounce it straight back to /onboarding).
  */
 export async function confirmOpenings(
   selections: OpeningSelection[],
-): Promise<void> {
+): Promise<never> {
   const { supabase, userId, profile } = await requireUser();
   if (selections.length === 0) {
     throw new Error("Select at least one opening");
@@ -96,10 +116,11 @@ export async function confirmOpenings(
   const selectedIds = selections.map((s) => s.openingId);
 
   // Deactivate everything, then upsert the new selection.
-  await supabase
+  const { error: deactivateError } = await supabase
     .from("user_openings")
     .update({ is_active: false })
     .eq("user_id", userId);
+  if (deactivateError) throw new Error(deactivateError.message);
 
   const { error: upsertError } = await supabase.from("user_openings").upsert(
     selections.map((s) => ({
@@ -133,12 +154,14 @@ export async function confirmOpenings(
   );
   if (cardsError) throw new Error(cardsError.message);
 
-  await supabase
+  const { error: onboardedError } = await supabase
     .from("profiles")
     .update({ onboarded_at: new Date().toISOString() })
     .eq("user_id", userId);
+  if (onboardedError) throw new Error(onboardedError.message);
 
   revalidatePath("/", "layout");
+  redirect("/");
 }
 
 /**

@@ -19,6 +19,12 @@ export function AppHeader() {
             Progress
           </Link>
           <Link
+            href="/library"
+            className="border-b-2 border-transparent pb-0.5 text-primary-foreground/85 hover:border-gold hover:text-gold"
+          >
+            Library
+          </Link>
+          <Link
             href="/settings"
             className="border-b-2 border-transparent pb-0.5 text-primary-foreground/85 hover:border-gold hover:text-gold"
           >

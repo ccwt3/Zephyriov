@@ -1,7 +1,16 @@
 import type { AnalyzedGame } from "./types";
+import type { AnalysisTimeControl } from "@/lib/db/types";
 import { userAgent } from "./user-agent";
 
 const MAX_GAMES = 300;
+
+// "slow" means classical here; correspondence is deliberately left out.
+const PERF_TYPE: Record<AnalysisTimeControl, string> = {
+  bullet: "bullet",
+  blitz: "blitz",
+  rapid: "rapid",
+  slow: "classical",
+};
 
 interface LichessGame {
   players?: {
@@ -12,15 +21,17 @@ interface LichessGame {
 }
 
 /**
- * Fetches the user's recent Lichess games (blitz/rapid/classical) with
- * opening tags. Public endpoint, no token required.
+ * Fetches the user's recent Lichess games in the requested time controls,
+ * with opening tags. Public endpoint, no token required.
  */
 export async function fetchLichessGames(
   username: string,
+  timeControls: AnalysisTimeControl[],
 ): Promise<AnalyzedGame[]> {
+  const perfType = timeControls.map((tc) => PERF_TYPE[tc]).join(",");
   const url =
     `https://lichess.org/api/games/user/${encodeURIComponent(username)}` +
-    `?max=${MAX_GAMES}&opening=true&perfType=blitz,rapid,classical`;
+    `?max=${MAX_GAMES}&opening=true&perfType=${perfType}`;
 
   const res = await fetch(url, {
     headers: {

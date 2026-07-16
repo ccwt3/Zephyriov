@@ -2,12 +2,16 @@ import type { Grade, LineState } from "@/lib/srs/types";
 
 export type ChessColor = "white" | "black";
 
+/** "slow" maps to lichess "classical" and chess.com "daily". */
+export type AnalysisTimeControl = "bullet" | "blitz" | "rapid" | "slow";
+
 export interface Profile {
   user_id: string;
   lichess_username: string | null;
   chesscom_username: string | null;
   lines_per_session: number;
   moves_per_block: number;
+  analysis_time_controls: AnalysisTimeControl[];
   timezone: string;
   onboarded_at: string | null;
 }
