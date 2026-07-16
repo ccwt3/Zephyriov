@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Vintage print palette: aged paper, poster red, soda-fountain teal, warm ink */
+    --background: 42 48% 90%;
+    --foreground: 22 42% 15%;
+    --card: 44 52% 94%;
+    --card-foreground: 22 42% 15%;
+    --popover: 44 52% 94%;
+    --popover-foreground: 22 42% 15%;
+    --primary: 355 62% 37%;
+    --primary-foreground: 44 60% 93%;
+    --secondary: 176 32% 30%;
+    --secondary-foreground: 44 60% 93%;
+    --muted: 42 32% 83%;
+    --muted-foreground: 25 22% 36%;
+    --accent: 43 68% 55%;
+    --accent-foreground: 22 42% 15%;
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 44 60% 93%;
+    --border: 24 30% 30%;
+    --input: 24 30% 30%;
+    --ring: 43 68% 42%;
+    --chart-1: 355 62% 37%;
+    --chart-2: 176 32% 30%;
+    --chart-3: 43 68% 45%;
+    --chart-4: 22 42% 25%;
+    --chart-5: 355 40% 55%;
+    --radius: 0.25rem;
+    /* Named accents for the vintage components */
+    --ink: 22 42% 15%;
+    --teal: 176 32% 30%;
+    --gold: 43 68% 55%;
+    --paper: 44 52% 94%;
+  }
+  .dark {
+    /* Same poster, printed on dark chocolate paper */
+    --background: 22 28% 10%;
+    --foreground: 42 40% 86%;
+    --card: 22 24% 14%;
+    --card-foreground: 42 40% 86%;
+    --popover: 22 24% 14%;
+    --popover-foreground: 42 40% 86%;
+    --primary: 355 55% 48%;
+    --primary-foreground: 44 60% 93%;
+    --secondary: 176 28% 36%;
+    --secondary-foreground: 44 60% 93%;
+    --muted: 22 20% 20%;
+    --muted-foreground: 38 20% 62%;
+    --accent: 43 60% 52%;
+    --accent-foreground: 22 42% 12%;
+    --destructive: 0 55% 48%;
+    --destructive-foreground: 44 60% 93%;
+    --border: 32 18% 42%;
+    --input: 32 18% 42%;
+    --ring: 43 60% 52%;
+    --ink: 42 40% 86%;
+    --teal: 176 28% 36%;
+    --gold: 43 60% 52%;
+    --paper: 22 24% 14%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Subtle halftone grain, like aged offset print */
+    background-image: radial-gradient(
+      hsl(var(--ink) / 0.06) 1px,
+      transparent 1.5px
+    );
+    background-size: 16px 16px;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-normal;
+  }
+}
+
+@layer components {
+  /* Print-block card: hard border + offset "letterpress" shadow */
+  .card-vintage {
+    @apply rounded-sm border-2 border-ink/90 bg-card shadow-press;
+  }
+
+  /* Uppercase condensed label, sign-painter style */
+  .label-vintage {
+    @apply font-label uppercase tracking-[0.14em];
+  }
+
+  /* Ribbon banner with forked ends (clip-path removes box borders, so it is flat) */
+  .ribbon {
+    clip-path: polygon(
+      0 0,
+      100% 0,
+      calc(100% - 0.75rem) 50%,
+      100% 100%,
+      0 100%,
+      0.75rem 50%
+    );
+    padding-inline: 2rem;
+  }
+}
