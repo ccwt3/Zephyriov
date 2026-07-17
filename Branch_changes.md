@@ -1,5 +1,28 @@
 # Branch changes
 
+## 2026-07-17 — Catálogo a 6 líneas por apertura + Hyper-Accelerated Dragon y King's Gambit
+
+- **Catálogo ampliado de 14×4 a 16×6** (96 líneas, 1,920 medias-jugadas): +2 líneas (ranks 5–6) en cada una de las 14 aperturas existentes (ej. Ruy Lopez → Open y Marshall; Queen's Gambit → Semi-Slav Meran y Tarrasch; Caro-Kann → Karpov y Tartakower; Vienna → Frankenstein-Dracula y Gambito Aceptado) y 2 aperturas nuevas con 6 líneas: **Sicilian Hyper-Accelerated Dragon** (B27) y **King's Gambit** (C30). Las líneas rank 1–4 existentes no se tocaron (su progreso SRS vive en esos `line_id`).
+- **Cero cambios de comportamiento en sesión/progresión**: `lib/srs/`, actions y UI ya eran agnósticos al número de líneas — solo crece el pool de líneas nuevas que el session builder reparte con el mismo `lines_per_session` (24→36 líneas con 6 aperturas ≈ de 4 a 6 días para verlas todas al menos una vez).
+- **Contenido siguiendo la metodología de curaduría**: selección y jugadas cotejadas contra Wikibooks "Chess Opening Theory" (la Lichess Masters DB —vía el nuevo `scripts/verify-lines.mjs`— quedó pendiente: su API exigía autenticación ese día; el script queda listo con caché y modo `--explore`). Trazabilidad por archivo en comentario de cada `.mjs` (fuente + fecha + qué es libro y qué es extensión natural). Nota de fuentes en THIRD-PARTY-NOTICES §9 (solo se cotejaron jugadas —hechos—; ninguna prosa copiada).
+- **`generate-seed.mjs` ahora emite dos archivos**: `supabase/seed.sql` completo (instalaciones frescas) y la migración delta **`supabase/migrations/2026-07-17-six-lines-and-new-openings.sql`** — lo único que hay que pegar en la DB viva: amplía el check de `opening_lines.rank` a 1–6, inserta solo el contenido nuevo (con `on conflict do nothing`, re-pegable) y **backfillea las `user_lines` faltantes** de las aperturas activas (sin esto, los usuarios existentes jamás verían los ranks 5–6 — no existía ningún código que las creara). `schema.sql` actualizado para instalaciones frescas.
+- Verificado: `generate-seed` sin errores (16/96/1,920), 29 tests Vitest, lint, typecheck y build de producción en verde. **Pendiente del usuario: pegar la migración delta en el SQL editor de Supabase** (y la de `2026-07-16-analysis-time-controls.sql` si aún no se corrió). Correr `node scripts/verify-lines.mjs` cuando el explorer vuelva a ser público.
+
+[Listo :v]
+
+## 2026-07-17 — Metodología de curaduría del catálogo (teoría real)
+
+- **Auditoría de la documentación existente**: lo que README/THIRD-PARTY-NOTICES documentaban sobre `supabase/seed.sql` era el *pipeline técnico* (`scripts/catalog/*.mjs` → `generate-seed.mjs` → SQL) y su *validación mecánica* (chess.js: legalidad + SAN canónico) — no una metodología de *contenido* teórico. THIRD-PARTY-NOTICES.md §9 ya reconocía honestamente que las 14 aperturas originales fueron redactadas con asistencia de IA y solo pasaron el chequeo de legalidad, sin verificación contra teoría real (base de partidas, ECO/MCO, etc.).
+- **Se documentó una metodología nueva** en el README (sección "Metodología de curaduría" dentro de "Catálogo de aperturas"): identificar la apertura contra clasificación ECO estándar, elegir las 4 líneas por frecuencia real en bases de partidas de nivel fuerte (no preferencia editorial), recabar las jugadas contra una fuente teórica primaria en vez de memoria, explicar cada jugada según el plan real de esa fuente, y dejar trazabilidad (fuente + fecha) por línea en cada `.mjs`. Aplica hacia adelante; las 14 aperturas existentes quedan marcadas como pendientes de auditoría contra este estándar (referenciado también desde THIRD-PARTY-NOTICES.md §9).
+
+[Listo :v]
+
+## 2026-07-17 — Fix del header roto en móvil
+
+- **`AppHeader` desbordaba en pantallas angostas**: el logo + los 3 links + el botón Logout no cabían en el ancho de un móvil (375px), empujando "Logout" fuera de la vista (confirmado con overflow real de 455px vs 375px de viewport). Se redujeron gap/padding/tamaño de fuente del nav y del logo en mobile (clases base más chicas, `sm:` restaura el tamaño original desde 640px), y el botón de Logout usa menos padding horizontal en mobile. Verificado en el navegador a 375px (sin overflow) y a 1280px (tamaño original intacto).
+
+[Listo :v]
+
 ## 2026-07-16 — Fix del setup congelado + librería de aperturas, UX de estudio y preferencias de análisis
 
 - **Fix: onboarding congelado al confirmar.** `confirmOpenings` ahora redirige a `/` desde el servidor (tras escribir `onboarded_at`) y revisa los errores de sus updates que antes se tragaba. En el cliente, el error `NEXT_REDIRECT` que toda action con `redirect()` lanza se reconoce y se ignora (el router navega solo); antes se pintaba en pantalla y su `setState` abortaba la navegación.

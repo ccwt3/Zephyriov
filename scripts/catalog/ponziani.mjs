@@ -1,4 +1,13 @@
 // Each move is [san, explanation]. Plies alternate White/Black starting with White.
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): selected per Wikibooks "Chess Opening Theory"
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e5/2._Nf3/2...Nc6/3._c3,
+//   consulted 2026-07-17); book moves follow the cited pages, with natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — explorer API was auth-gated at the time of writing.
+//   Rank 5: Caro Gambit 3...d5 4.Qa4 Bd7 (ECO C44).
+//   Rank 6: Leonhardt 3...d5 4.Qa4 Nf6 (ECO C44).
 export default {
   slug: "ponziani",
   name: "Ponziani Opening",
@@ -108,6 +117,58 @@ export default {
         ["exd4", "Release the tension to free Black's game."],
         ["cxd4", "Recapture, keeping the ideal pawn duo on d4/e4."],
         ["d5", "Strike back in the center at last."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Caro Gambit: 3...d5 4.Qa4 Bd7",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["c3", "Prepare the d4 break."],
+        ["d5", "The critical counter, striking e4."],
+        ["Qa4", "The point of the Ponziani: pin the c6 knight."],
+        ["Bd7", "The Caro Gambit: calmly break the pin and offer e5."],
+        ["exd5", "Take the center pawn while the offer stands."],
+        ["Nd4", "The trick: the 'pinned' knight jumps — ...Nc2+ forking is the threat."],
+        ["Qd1", "Retreat and cover c2; Qxd7+ loses the queen to ...Qxd7."],
+        ["Nxf3+", "Trade off the defender of e5 and d4."],
+        ["Qxf3", "Recapture; White is a pawn up but behind in development."],
+        ["Nf6", "Develop with pressure on d5."],
+        ["Bc4", "Hold the extra d5 pawn the natural way."],
+        ["Bd6", "Aim at h2 and prepare ...O-O — full compensation play."],
+        ["d3", "Open the c1 bishop and solidify."],
+        ["O-O", "King safety; Black's activity balances the pawn."],
+        ["O-O", "White castles too."],
+        ["Bg4", "Hit the queen and probe d5's defenses — a rich fight."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Leonhardt: 3...d5 4.Qa4 Nf6",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["c3", "Prepare the d4 break."],
+        ["d5", "The critical counter."],
+        ["Qa4", "Pin the c6 knight against e5/d5."],
+        ["Nf6", "The Leonhardt: develop and ignore the threat — a true gambit."],
+        ["Nxe5", "Call the bluff: take, exploiting the pinned defender."],
+        ["Nxe4", "Grab the pawn back in kind, keeping maximum activity."],
+        ["Nxc6", "Win the tangled knight before Black consolidates."],
+        ["bxc6", "Recapture, opening the b-file for counterplay."],
+        ["Qxc6+", "Collect a second pawn with check — the punishing continuation."],
+        ["Bd7", "Block and develop with tempo on the queen."],
+        ["Qxd5", "Take a third pawn — greedy but theory approves."],
+        ["Nf6", "Hit the queen again; Black plays for raw initiative."],
+        ["Qd3", "Step back to safety, ready to return material for development."],
+        ["Bd6", "Point everything at the kingside."],
+        ["Be2", "Catch up in development before the storm hits."],
+        ["O-O", "Black castles; White is up material but must defend precisely."],
       ],
     },
   ],

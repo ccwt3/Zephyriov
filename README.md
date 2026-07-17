@@ -318,7 +318,7 @@ openings ─1:N─ opening_lines ─1:N─ line_moves
 | Tabla | Qué guarda |
 |---|---|
 | `openings` | Apertura estudiable. `playable_colors`: desde qué lados tiene sentido estudiarla. `detection_keys`: claves para el matcher |
-| `opening_lines` | Las 4 líneas teóricas de cada apertura (`rank` 1–4) |
+| `opening_lines` | Las 6 líneas teóricas de cada apertura (`rank` 1–6; hasta 2026-07-17 eran 4) |
 | `line_moves` | Cada media-jugada: `ply` (1-based, impar = blancas), `san`, `explanation` |
 
 **Datos por usuario (RLS)**
@@ -427,7 +427,7 @@ Estética de cartel impreso años 20–50 (papel envejecido + rojo cartel + teal
 
 ## Catálogo de aperturas
 
-14 aperturas × 4 líneas × ~10 jugadas del estudiante (1,120 medias-jugadas con explicación en inglés): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian.
+16 aperturas × 6 líneas × ~10 jugadas del estudiante (~1,920 medias-jugadas con explicación en inglés): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian, Sicilian Hyper-Accelerated Dragon y King's Gambit. (Hasta 2026-07-17 eran 14 × 4; la ampliación a 6 líneas no cambia el comportamiento de la sesión diaria — solo agranda el pool de líneas nuevas que el session builder reparte con el mismo presupuesto `lines_per_session`.)
 
 **Formato fuente** (un archivo por apertura en [scripts/catalog/](scripts/catalog/)):
 
@@ -445,11 +445,24 @@ export default {
 };
 ```
 
-**Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs`, corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados) y re-ejecuta `supabase/seed.sql` en Supabase.
+**Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs` y corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados). El comando genera **dos** archivos: `supabase/seed.sql` (catálogo completo, para instalaciones frescas — no es re-ejecutable sobre una DB ya sembrada) y la migración delta vigente en `supabase/migrations/` (solo el contenido nuevo, con `on conflict do nothing`; es lo que se pega en una DB viva). Para verificar el contenido contra práctica magistral existe `node scripts/verify-lines.mjs` (recorre cada línea contra la Lichess Masters DB; requiere que el explorer API esté accesible) y su modo de investigación `--explore "e4 e5 ..."`.
+
+### Metodología de curaduría (contenido basado en teoría real)
+
+`generate-seed.mjs` solo garantiza que una línea sea **legal** (chess.js) — no que sea la línea que la teoría real jugaría, ni que las 4 líneas elegidas sean efectivamente las principales. Esa es una validación mecánica, no teórica. El catálogo original (14 aperturas) se redactó con asistencia de IA y solo pasó ese chequeo de legalidad (ver honestidad en [THIRD-PARTY-NOTICES.md §9](THIRD-PARTY-NOTICES.md#9-contenido-del-catálogo-de-aperturas)); no hubo un proceso documentado de verificación contra teoría real. Para agregar o revisar una apertura de aquí en adelante, seguir estos pasos:
+
+1. **Identificar la apertura.** Nombre canónico y código ECO contra una clasificación estándar verificable (ECO A00–E99; p. ej. cruzar contra Wikipedia "List of chess openings" o el volumen de *Encyclopaedia of Chess Openings* correspondiente). Los `detectionKeys` (alias para el matcher) deben ser nomenclatura real usada por jugadores/bases de datos (ej. "spanish game" para Ruy Lopez), no inventados.
+2. **Elegir las 6 líneas principales por frecuencia real**, no por preferencia editorial: consultar una base de partidas con estadísticas de frecuencia a nivel fuerte (ej. Lichess Opening Explorer filtrado a partidas de maestros — automatizado en `scripts/verify-lines.mjs` — o una fuente teórica citable como Wikibooks "Chess Opening Theory" cuando el explorer no esté accesible). Priorizar: (a) volumen de partidas / estatus de línea principal en la fuente, (b) reconocimiento como variante "nombrada" en la teoría — evitar transposiciones triviales que dupliquen otra línea ya elegida.
+3. **Recabar las jugadas contra una fuente teórica primaria**, no de memoria: la misma base de partidas maestras, o una referencia bibliográfica reconocida (ECO, MCO, un monográfico de la apertura). Extender cada línea ~20 medias-jugadas (10 movimientos), hasta llegar a una posición "tabiya" reconocida donde termina la teoría dura y empieza el medio juego.
+4. **Escribir la explicación de cada jugada a partir del plan/amenaza real** que documenta la fuente (no una paráfrasis genérica del movimiento).
+5. **Dejar trazabilidad**: cada `scripts/catalog/*.mjs` debe llevar, en un comentario al inicio, la fuente consultada por línea (nombre + URL o referencia bibliográfica) y la fecha de consulta — la teoría evoluciona, y sin esto no se puede auditar ni volver a verificar después.
+6. **Validar y regenerar**: `node scripts/generate-seed.mjs` sigue siendo la red de seguridad para legalidad/SAN/ranks duplicados, pero es un chequeo adicional sobre el paso 3, no un sustituto de la verificación teórica.
+
+Las líneas rank 1–4 de las 14 aperturas originales no pasaron por este proceso y quedan pendientes de auditoría. Las líneas rank 5–6 y las 2 aperturas agregadas el 2026-07-17 sí lo siguieron (fuente principal: Wikibooks "Chess Opening Theory" + teoría estándar publicada, con trazabilidad en el comentario de cada `.mjs`); su verificación de frecuencia contra la Masters DB quedó pendiente porque el explorer API exigía autenticación ese día — correr `node scripts/verify-lines.mjs` cuando vuelva a estar accesible.
 
 ## Librería de aperturas
 
-`/library` (link "Library" en el header) muestra el catálogo completo — cada apertura con su ECO, colores jugables y las 4 líneas en notación de texto (generada por [lib/notation.ts](lib/notation.ts)) — y permite gestionar el estudio a mano, como alternativa o complemento al análisis automático:
+`/library` (link "Library" en el header) muestra el catálogo completo — cada apertura con su ECO, colores jugables y las 6 líneas en notación de texto (generada por [lib/notation.ts](lib/notation.ts)) — y permite gestionar el estudio a mano, como alternativa o complemento al análisis automático:
 
 - **Add to my studies** ([lib/actions/library.ts](lib/actions/library.ts) `addOpening`): upsert de `user_openings` (sin tocar el resto de la selección, a diferencia de `confirmOpenings`) + creación de las tarjetas SRS faltantes.
 - **Remove from studies** (`removeOpening`): marca `is_active = false`. Las `user_lines` **no se tocan**: re-agregar la apertura con el mismo color recupera el progreso; con el color contrario, se resetea (las jugadas calificadas cambian de lado). Si se quita una apertura con líneas pendientes en la sesión de hoy, esos `session_items` se borran y el estado de la sesión se recalcula — sin esto la sesión quedaría incompletable.

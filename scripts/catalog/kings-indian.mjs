@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Averbakh Variation (ECO E73). Rank 6: Makagonov System 6.h3 (ECO E71/E90).
 export default {
   slug: "kings-indian",
   name: "King's Indian Defense",
@@ -107,6 +115,58 @@ export default {
         ["Qb6", "Hit d4 and b2 — awkward pressure against the fianchetto."],
         ["Re1", "Defend e4 laterally and support d4 tactics."],
         ["exd4", "Win the central skirmish — ...Nc5 and ...d5 follow."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Averbakh Variation",
+      moves: [
+        ["d4", "White takes the center."],
+        ["Nf6", "Indian development."],
+        ["c4", "Space."],
+        ["g6", "The KID."],
+        ["Nc3", "Central development."],
+        ["Bg7", "The KID bishop."],
+        ["e4", "The big center."],
+        ["d6", "The standard structure."],
+        ["Be2", "Develop before committing the g1 knight."],
+        ["O-O", "Castle."],
+        ["Bg5", "The Averbakh: clamp e7 so the standard ...e5 is met by tactics."],
+        ["c5", "The main answer — since ...e5 is awkward, strike on the other wing."],
+        ["d5", "Close the center into a Benoni structure on White's terms."],
+        ["e6", "Challenge the head of the chain immediately."],
+        ["Qd2", "Connect with Bg5-h6 ideas and keep e6/d5 tension."],
+        ["exd5", "Resolve toward an open e-file."],
+        ["exd5", "Keep the space-gaining Benoni bind rather than cxd5."],
+        ["Re8", "The rook exploits the freshly opened file."],
+        ["Nf3", "Complete development at last."],
+        ["Bg4", "Pin and prepare trades to ease the cramped position."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Makagonov: 6.h3",
+      moves: [
+        ["d4", "White takes the center."],
+        ["Nf6", "Indian development."],
+        ["c4", "Space."],
+        ["g6", "The KID."],
+        ["Nc3", "Central development."],
+        ["Bg7", "The KID bishop."],
+        ["e4", "The big center."],
+        ["d6", "The standard structure."],
+        ["Nf3", "Classical development."],
+        ["O-O", "Castle."],
+        ["h3", "The Makagonov: prepare Be3/g4 without allowing ...Ng4 or ...Bg4."],
+        ["e5", "The thematic strike anyway."],
+        ["d5", "Close the center — with h3 in, White's g4 clamp is coming."],
+        ["Na6", "The modern route: the knight heads for c5 hitting e4."],
+        ["Bg5", "Provoke a concession before completing the setup."],
+        ["h6", "Ask the bishop."],
+        ["Be3", "Retreat with the point that ...Ng4 never works with h3 played."],
+        ["Nc5", "The knight arrives — pressure on e4 pins White's pieces down."],
+        ["Nd2", "Overprotect e4 and unblock the f-pawn quietly."],
+        ["a5", "Anchor the c5 knight against b4 — the standard tabiya."],
       ],
     },
   ],

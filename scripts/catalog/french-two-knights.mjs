@@ -1,3 +1,12 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): Wikibooks "Chess Opening Theory"
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e6/2._Nf3/2...d5/3._Nc3,
+//   consulted 2026-07-17) documents only 3...Nf6 and 3...d4 in depth (ranks 1-2 here);
+//   ranks 5-6 cover the remaining principled tries with natural-play continuations.
+//   Masters-DB frequency check (scripts/verify-lines.mjs) pending — explorer API
+//   was auth-gated at the time of writing.
+//   Rank 5: 3...c5 (ECO C00). Rank 6: 3...Nc6 (ECO C00).
 export default {
   slug: "french-two-knights",
   name: "French: Two Knights Variation",
@@ -107,6 +116,58 @@ export default {
         ["b6", "Prepare ...Bb7 to fight for the long diagonal."],
         ["Qe2", "Connect rooks and prepare Rad1 — a pleasant risk-free edge."],
         ["Bb7", "Complete development; White holds more space."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Counterstrike: 3...c5",
+      moves: [
+        ["e4", "Take the center."],
+        ["e6", "The French Defense."],
+        ["Nc3", "Develop and cover e4."],
+        ["d5", "Challenge e4."],
+        ["Nf3", "The Two Knights setup."],
+        ["c5", "Strike the center immediately, French-style, before d4 exists."],
+        ["exd5", "Clarify the center while Black's pieces are home."],
+        ["exd5", "Recapture, freeing the c8 bishop."],
+        ["d4", "Claim the center — an IQP battle is coming."],
+        ["Nc6", "Develop and hold c5."],
+        ["Bb5", "Pin, stepping up the pressure on the center."],
+        ["Nf6", "Develop; the d5 pawn is well covered."],
+        ["O-O", "King safety first."],
+        ["Be7", "Prepare to castle."],
+        ["dxc5", "Trade into the isolani structure White wants."],
+        ["Bxc5", "Recapture, developing again for free."],
+        ["Bg5", "The classic anti-IQP pin against d5's defender."],
+        ["O-O", "Castle; piece activity must offset the isolated pawn."],
+        ["Bxc6", "Trade to fix Black with weak queenside pawns."],
+        ["bxc6", "Recapture — hanging pawns, open b-file: double-edged."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Development: 3...Nc6",
+      moves: [
+        ["e4", "Take the center."],
+        ["e6", "The French Defense."],
+        ["Nc3", "Develop and cover e4."],
+        ["d5", "Challenge e4."],
+        ["Nf3", "The Two Knights setup."],
+        ["Nc6", "Pure development, keeping every pawn break in reserve."],
+        ["d4", "Build the full center while it's free."],
+        ["dxe4", "Trade before the center gets overwhelming."],
+        ["Nxe4", "Recapture with a strong central knight."],
+        ["Nf6", "Challenge it immediately."],
+        ["Nxf6+", "Trade on White's terms."],
+        ["Qxf6", "Recapture with the queen — ...Bd6 and ...O-O come fast."],
+        ["Bd3", "The kingside diagonal."],
+        ["Bd6", "Mirror it, eyeing h2."],
+        ["O-O", "King safety."],
+        ["O-O", "Black castles; development is complete and sound."],
+        ["c3", "Solidify d4 against the coming ...e5 break."],
+        ["e5", "The freeing break anyway — well-timed equality."],
+        ["dxe5", "Trade; refusing leaves the tension in Black's favor."],
+        ["Nxe5", "Recapture; the symmetrical position holds no fear for Black."],
       ],
     },
   ],

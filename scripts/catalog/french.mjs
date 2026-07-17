@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Rubinstein Variation (ECO C10). Rank 6: Exchange Variation (ECO C01).
 export default {
   slug: "french-defense",
   name: "French Defense",
@@ -107,6 +115,58 @@ export default {
         ["O-O", "Castle — into the storm, but the center counterplay is real."],
         ["O-O-O", "Kings on opposite wings: a razor-sharp race."],
         ["a6", "Start the queenside pawn avalanche with ...b5 next."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Rubinstein Variation",
+      moves: [
+        ["e4", "White takes the center."],
+        ["e6", "The French."],
+        ["d4", "Full center."],
+        ["d5", "The planned break."],
+        ["Nc3", "Defend e4."],
+        ["dxe4", "The Rubinstein: trade the tension away for a compact game."],
+        ["Nxe4", "Recapture with a centralized knight."],
+        ["Nd7", "Prepare ...Ngf6 so a trade doesn't wreck the pawns."],
+        ["Nf3", "Natural development."],
+        ["Ngf6", "Offer the trade on White's terms no longer."],
+        ["Nxf6+", "Take — retreating concedes the tempo battle."],
+        ["Nxf6", "Recapture with the piece, keeping the structure clean."],
+        ["Bd3", "The active diagonal, eyeing h7."],
+        ["c5", "The essential break — without it Black suffocates."],
+        ["dxc5", "Trade toward a small but lasting development lead."],
+        ["Bxc5", "Recapture, completing a key developing move for free."],
+        ["Qe2", "Connect for O-O-O ideas and control e5."],
+        ["O-O", "King safety."],
+        ["Bg5", "The last piece out, pinning — White's edge is activity."],
+        ["b6", "Solve the eternal French problem: ...Bb7 comes next."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Exchange Variation",
+      moves: [
+        ["e4", "White takes the center."],
+        ["e6", "The French."],
+        ["d4", "Full center."],
+        ["d5", "The planned break."],
+        ["exd5", "The Exchange: trade into a symmetric, open structure."],
+        ["exd5", "Recapture — the c8 bishop is finally free."],
+        ["Nf3", "Develop toward the kingside."],
+        ["Nf6", "Mirror development."],
+        ["Bd3", "The active diagonal."],
+        ["Bd6", "Black mirrors — in symmetry, activity is everything."],
+        ["O-O", "King safety."],
+        ["O-O", "Black castles."],
+        ["Bg5", "Create the first asymmetry: pressure on f6."],
+        ["Bg4", "Answer in kind against f3."],
+        ["Nbd2", "Flexible: support Nf3, keep c3 free for the pawn."],
+        ["Nbd7", "Same mirror logic."],
+        ["c3", "Solidify d4 and open the queen's path to b3/c2."],
+        ["c6", "Match it; both sides fight for the e-file next."],
+        ["Qc2", "Step off the pin's file and eye h7."],
+        ["Qc7", "Symmetry holds — the middlegame is a pure activity contest."],
       ],
     },
   ],

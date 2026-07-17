@@ -44,12 +44,12 @@ create table public.openings (
   created_at timestamptz not null default now()
 );
 
--- The 3-4 most important theoretical lines of each opening.
+-- The 4-6 most important theoretical lines of each opening.
 create table public.opening_lines (
   id uuid primary key default gen_random_uuid(),
   opening_id uuid not null references public.openings (id) on delete cascade,
   name text not null,
-  rank smallint not null check (rank between 1 and 4),
+  rank smallint not null check (rank between 1 and 6),
   created_at timestamptz not null default now(),
   unique (opening_id, rank)
 );

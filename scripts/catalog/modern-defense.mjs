@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named systems,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Fianchetto 4.g3 (ECO B06). Rank 6: Pseudo-Yugoslav ...c6 & ...b5 (ECO B06).
 export default {
   slug: "modern-defense",
   name: "Modern Defense",
@@ -107,6 +115,58 @@ export default {
         ["O-O", "King safety."],
         ["a5", "White fixes the queenside — space vs. flexibility."],
         ["Qc7", "Connect and eye e5; a rich maneuvering game unfolds."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Fianchetto: 4.g3",
+      moves: [
+        ["e4", "White takes the center."],
+        ["g6", "The Modern."],
+        ["d4", "Full center."],
+        ["Bg7", "The fianchetto."],
+        ["Nc3", "Development."],
+        ["d6", "Standard restraint."],
+        ["g3", "The positional treatment: mirror the fianchetto, deny targets."],
+        ["Nc6", "Provoke d5 or win the d4/e5 tension battle."],
+        ["Be3", "Hold d4 and keep the structure flexible."],
+        ["e5", "Stake the central claim before White finishes."],
+        ["d5", "Close, gaining space and shutting the g7 bishop's file."],
+        ["Nce7", "Standard KID-style regrouping toward f5/g6."],
+        ["Bg2", "Complete the fianchetto; e4 is rock solid."],
+        ["f5", "The thematic break — Black's entire play is here."],
+        ["exf5", "Trade to keep e4 for pieces and blunt the f-file."],
+        ["gxf5", "Recapture toward the center, opening the g-file."],
+        ["Nge2", "Develop while keeping f4 and d4 covered."],
+        ["Nf6", "Develop at last; ...O-O and ...f4 are the plan."],
+        ["O-O", "King safety."],
+        ["O-O", "Both castled — a maneuvering battle across the whole board."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Pseudo-Yugoslav: ...c6 & ...b5",
+      moves: [
+        ["e4", "White takes the center."],
+        ["g6", "The Modern."],
+        ["d4", "Full center."],
+        ["Bg7", "The fianchetto."],
+        ["Nc3", "Development."],
+        ["c6", "The flexible move order: ...b5 comes before ...Nf6 exists to be hit."],
+        ["Be3", "The Yugoslav-style setup: Qd2, f3 and O-O-O are the plan."],
+        ["d6", "Standard restraint, transposing structures."],
+        ["Qd2", "Connect for O-O-O and eye h6."],
+        ["b5", "The point of ...c6: expansion with tempo-free support."],
+        ["f3", "Cover e4 and prepare the g4/h4 storm."],
+        ["Nd7", "Develop, keeping the g8 knight for f6 or h6 duty."],
+        ["h4", "Start the storm before Black's arrives."],
+        ["h5", "The standard brake: fix h4 and deny g4 its full force."],
+        ["Nh3", "Reroute — the g5 outpost is the new target."],
+        ["Ngf6", "Complete development, covering g4 and e4-jumps."],
+        ["O-O-O", "Commit: opposite wings, full-speed attacks."],
+        ["Qa5", "The counterattack arrives with tempo threats on a2/c3."],
+        ["Kb1", "The standard prophylactic sidestep."],
+        ["Bb7", "Complete the setup — both sides race; one tempo decides."],
       ],
     },
   ],

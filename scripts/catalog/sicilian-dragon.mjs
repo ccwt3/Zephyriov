@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Yugoslav 9.g4 (ECO B76). Rank 6: Fianchetto 6.g3 (ECO B70).
 export default {
   slug: "sicilian-dragon",
   name: "Sicilian Dragon",
@@ -107,6 +115,58 @@ export default {
         ["d5", "...this freeing break, the whole point: strike the center now!"],
         ["exd5", "Take — declining leaves White worse in the center."],
         ["Nxd5", "Recapture; Black has full equality and active pieces."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Yugoslav: 9.g4",
+      moves: [
+        ["e4", "White takes the center."],
+        ["c5", "The Sicilian."],
+        ["Nf3", "Prepare d4."],
+        ["d6", "Support the coming ...Nf6."],
+        ["d4", "The Open Sicilian."],
+        ["cxd4", "The thematic trade."],
+        ["Nxd4", "Recapture."],
+        ["Nf6", "Develop and hit e4."],
+        ["Nc3", "Defend e4."],
+        ["g6", "The Dragon."],
+        ["Be3", "Yugoslav development."],
+        ["Bg7", "Complete the fianchetto."],
+        ["f3", "Support e4, prepare the storm."],
+        ["O-O", "Castle."],
+        ["Qd2", "Prepare O-O-O."],
+        ["Nc6", "Develop with pressure on d4."],
+        ["g4", "The immediate bayonet: gain space before deciding on the king."],
+        ["Be6", "The main answer: develop and prepare ...d5 or ...Qa5 anyway."],
+        ["Nxe6", "Trade before ...Nxd4 — doubling Black's pawns..."],
+        ["fxe6", "...but the f-file opens and e6/d5 gets a firm grip — double-edged."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Fianchetto: 6.g3",
+      moves: [
+        ["e4", "White takes the center."],
+        ["c5", "The Sicilian."],
+        ["Nf3", "Prepare d4."],
+        ["d6", "Support the coming ...Nf6."],
+        ["d4", "The Open Sicilian."],
+        ["cxd4", "The thematic trade."],
+        ["Nxd4", "Recapture."],
+        ["Nf6", "Develop and hit e4."],
+        ["Nc3", "Defend e4."],
+        ["g6", "The Dragon."],
+        ["g3", "The Fianchetto: meet the dragon bishop with its mirror image."],
+        ["Nc6", "Develop with pressure on d4."],
+        ["Nde2", "Sidestep — keep the knight rather than allow ...Nxd4."],
+        ["Bg7", "Complete the fianchetto."],
+        ["Bg2", "The g2 bishop guards e4, freeing the pieces from defense."],
+        ["O-O", "Castle."],
+        ["O-O", "Both kings safe: a positional Dragon, not a race."],
+        ["Rb8", "Prepare the ...b5-b4 minority plan — Black's standard counterplay."],
+        ["a4", "Restrain ...b5 immediately."],
+        ["a6", "Insist: ...b5 will come with support."],
       ],
     },
   ],

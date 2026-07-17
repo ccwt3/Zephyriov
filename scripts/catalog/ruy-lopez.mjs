@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Open Variation (ECO C80-C83). Rank 6: Marshall Attack (ECO C89).
 export default {
   slug: "ruy-lopez",
   name: "Ruy Lopez",
@@ -107,6 +115,58 @@ export default {
         ["Re8", "Contest the e-file."],
         ["Nf1", "Continue the maneuver — slow but venomous."],
         ["Bf8", "Black regroups likewise; a rich maneuvering game begins."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Open Variation: 5...Nxe4",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["Bb5", "The Ruy Lopez."],
+        ["a6", "The Morphy Defense."],
+        ["Ba4", "Keep the pin option alive."],
+        ["Nf6", "Develop and counterattack e4."],
+        ["O-O", "Castle — e4 is only tactically defended."],
+        ["Nxe4", "The Open Variation: take the pawn and fight for the initiative."],
+        ["d4", "Open the center at once — White's compensation is activity."],
+        ["b5", "Push the bishop back before it recaptures on c6."],
+        ["Bb3", "The bishop keeps eyeing f7 from its classic diagonal."],
+        ["d5", "Secure the e4 knight and free the c8 bishop — the Open's backbone."],
+        ["dxe5", "Grab the e5 pawn; the advanced pawn cramps Black later."],
+        ["Be6", "Develop and overprotect d5 against the b3 bishop."],
+        ["c3", "Blunt ...Nc5-ideas hitting b3 and prepare Nbd2 to evict e4."],
+        ["Be7", "Sensible development; ...Bc5 is the sharper alternative."],
+        ["Nbd2", "Challenge the strong e4 knight — Black's whole game hangs on it."],
+        ["O-O", "King safety; the fight revolves around the e4 outpost."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Marshall Attack",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["Bb5", "The Ruy Lopez."],
+        ["a6", "The Morphy Defense."],
+        ["Ba4", "Keep the pin option alive."],
+        ["Nf6", "Develop and counterattack e4."],
+        ["O-O", "Castle."],
+        ["Be7", "Solid development, keeping ...b5 and ...d5 ideas in reserve."],
+        ["Re1", "Defend e4 and take the e-file."],
+        ["b5", "Push the bishop off the a4-e8 diagonal."],
+        ["Bb3", "Standard retreat toward f7."],
+        ["O-O", "Castle FIRST — delaying ...d6 keeps the d-pawn free for ...d5."],
+        ["c3", "Prepare d4; this is what the Marshall exploits."],
+        ["d5", "The Marshall Attack: sacrifice a pawn for a lasting kingside attack."],
+        ["exd5", "Accept — declining concedes easy equality."],
+        ["Nxd5", "Recapture and clear the way for ...Nxe5xe5 tricks."],
+        ["Nxe5", "Take the pawn; White banks the material."],
+        ["Nxe5", "Recapture — after Rxe5 c6 Black gets ...Bd6, ...Qh4 with a raging attack."],
       ],
     },
   ],

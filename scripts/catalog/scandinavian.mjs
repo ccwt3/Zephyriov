@@ -1,3 +1,12 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): selected per Wikibooks "Chess Opening Theory"
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...d5, consulted 2026-07-17);
+//   book moves follow the cited pages, with natural-play extensions past book depth.
+//   Masters-DB frequency check (scripts/verify-lines.mjs) pending — explorer API
+//   was auth-gated at the time of writing.
+//   Rank 5: Portuguese 3.d4 Bg4, incl. the 5.g4 "correspondence refutation" (ECO B01).
+//   Rank 6: Icelandic Gambit 3.c4 e6 (ECO B01).
 export default {
   slug: "scandinavian",
   name: "Scandinavian Defense",
@@ -107,6 +116,58 @@ export default {
         ["Nbd7", "Develop, heading for ...Be7 and ...O-O."],
         ["Bf4", "White enjoys free development."],
         ["Be7", "Black completes the setup: passive but nearly refutation-proof."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Portuguese: 3.d4 Bg4",
+      moves: [
+        ["e4", "White takes the center."],
+        ["d5", "The Scandinavian."],
+        ["exd5", "White accepts."],
+        ["Nf6", "The gambit move order."],
+        ["d4", "White holds the extra pawn and builds."],
+        ["Bg4", "The Portuguese: develop with maximum piece pressure, pawn be damned."],
+        ["f3", "The critical test: kick the bishop and keep everything."],
+        ["Bf5", "Retreat but stay active — d3/c2 are the targets."],
+        ["g4", "The 'correspondence refutation': kick again and grab space."],
+        ["Bg6", "Keep the diagonal; the bishop waits for e4/d3 to reappear."],
+        ["c4", "Cement d5 — White plays for the full point of material."],
+        ["e6", "Strike the pawn chain before White consolidates."],
+        ["dxe6", "Take — holding everything is impossible."],
+        ["fxe6", "Recapture toward the center; the f-file opens for the attack."],
+        ["Nc3", "Develop and cover the loose light squares."],
+        ["Bb4", "Pin — every Black piece points at White's king."],
+        ["Bg2", "The kingside pawns advanced, so the bishop guards from g2."],
+        ["Nc6", "Full mobilization; d4 is the pressure point."],
+        ["Ne2", "Careful development; d4 and f4 both get cover (the c3 knight is pinned)."],
+        ["Qe7", "Connect for ...O-O-O — Black's activity vs White's extra pawn."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Icelandic Gambit: 3.c4 e6",
+      moves: [
+        ["e4", "White takes the center."],
+        ["d5", "The Scandinavian."],
+        ["exd5", "White accepts."],
+        ["Nf6", "The gambit move order."],
+        ["c4", "White holds the pawn the greedy way — inviting the Icelandic."],
+        ["e6", "The gambit: give a whole pawn for development and open lines."],
+        ["dxe6", "Accept — declining hands Black easy equality."],
+        ["Bxe6", "Recapture with the bishop, hitting c4 already."],
+        ["d4", "Take the center White is entitled to — but development lags."],
+        ["Bb4+", "Check, forcing a concession on the dark squares."],
+        ["Bd2", "The main block."],
+        ["Qe7", "Load the e-file against White's uncastled king."],
+        ["Bxb4", "Trade off the pinning bishop — but it costs more time."],
+        ["Qxb4+", "Recapture with tempo — the queen forks b2 threats too."],
+        ["Qd2", "Block; b2 must be watched and the endgame beckons."],
+        ["Nc6", "Keep the queens on and hit d4 — trading helps White."],
+        ["d5", "Push, forking the c6 knight and e6 bishop..."],
+        ["O-O-O", "...answered by the point: the rook lands on d8 with a pin."],
+        ["dxe6", "Take the piece anyway."],
+        ["Rxd2", "The pin cashes in: queen for rook — dynamic balance."],
       ],
     },
   ],

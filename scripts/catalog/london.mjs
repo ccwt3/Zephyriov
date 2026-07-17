@@ -1,3 +1,12 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): selected per Wikibooks "Chess Opening Theory"
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._d4/1...d5/2._Bf4, consulted
+//   2026-07-17); book moves follow the cited page, with natural-play extensions past
+//   book depth. Masters-DB frequency check (scripts/verify-lines.mjs) pending —
+//   explorer API was auth-gated at the time of writing.
+//   Rank 5: Steinitz Countergambit 2...c5 (ECO D00).
+//   Rank 6: vs King's Indian setup 1...Nf6 + ...g6/...d6 (ECO A48).
 export default {
   slug: "london-system",
   name: "London System",
@@ -107,6 +116,58 @@ export default {
         ["O-O", "Black castles."],
         ["Rac1", "Take the file that is about to open."],
         ["Re8", "Black waits; White presses with a riskless initiative."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Steinitz Countergambit: 2...c5",
+      moves: [
+        ["d4", "Take the center."],
+        ["d5", "Symmetrical reply."],
+        ["Bf4", "The London bishop."],
+        ["c5", "The immediate countergambit: hit d4 before White sets the wall."],
+        ["e3", "Decline calmly and keep the structure — taking helps Black."],
+        ["Nc6", "Develop with pressure on d4."],
+        ["c3", "The wall, as always."],
+        ["Nf6", "Natural development."],
+        ["Nd2", "Flexible London development, holding e4 and c4 ideas."],
+        ["Bf5", "Grab the good diagonal before ...e6 closes it."],
+        ["Ngf3", "Complete the setup."],
+        ["Qb6", "The point of Black's order: b2 is attacked and Qb3 is harder now."],
+        ["Qb3", "Offer the trade anyway — the endgame slightly favors White."],
+        ["c4", "Black declines with tempo: hit the queen and clamp the queenside."],
+        ["Qxb6", "Trade on White's terms before ...Qxb3 doubles White's pawns."],
+        ["axb6", "Recapture; the open a-file and b6 targets are the trade-off."],
+        ["Be2", "Develop and prepare O-O; the c4 pawn cramps White slightly."],
+        ["e6", "Solidify and open the f8 bishop."],
+        ["O-O", "King safety."],
+        ["Be7", "Complete development — a subtle, balanced endgame battle."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "vs King's Indian: ...g6 & ...d6",
+      moves: [
+        ["d4", "Take the center."],
+        ["Nf6", "The Indian move order — no early ...d5."],
+        ["Bf4", "The London works against nearly everything — play it anyway."],
+        ["g6", "Black sets up a King's Indian structure."],
+        ["e3", "The usual pyramid."],
+        ["Bg7", "The KID bishop."],
+        ["Nf3", "Develop."],
+        ["d6", "The KID point: prepare ...e5 against the London wall."],
+        ["h3", "Secure h2 for the bishop before ...Nh5 or ...e5 tricks."],
+        ["O-O", "Black castles."],
+        ["Be2", "Modest and correct: d3 would bite on granite against ...g6."],
+        ["c5", "Strike at d4 — the alternative plan to ...e5."],
+        ["c3", "Hold the wall."],
+        ["Nc6", "Develop and keep asking about d4."],
+        ["O-O", "King safety."],
+        ["b6", "Prepare ...Bb7 for the long-diagonal battle."],
+        ["Nbd2", "Complete the setup; a4 and Ne5 are the active tries."],
+        ["Bb7", "Complete development."],
+        ["a4", "Gain space and threaten a5 against the b6 chain."],
+        ["a6", "Restrain it — a long maneuvering game, London-style."],
       ],
     },
   ],

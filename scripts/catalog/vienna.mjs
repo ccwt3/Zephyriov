@@ -1,3 +1,12 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e5/2._Nc3, consulted
+//   2026-07-17); natural-play extensions past book depth. Masters-DB frequency check
+//   (scripts/verify-lines.mjs) pending — explorer API was auth-gated at the time of writing.
+//   Rank 5: Frankenstein-Dracula 3.Bc4 Nxe4 (ECO C27).
+//   Rank 6: Vienna Gambit Accepted 3...exf4 4.e5 (ECO C29).
 export default {
   slug: "vienna-game",
   name: "Vienna Game",
@@ -107,6 +116,58 @@ export default {
         ["O-O", "Black castles."],
         ["Qd3", "Connect and aim pieces at the kingside."],
         ["Re8", "Activate the rook; White retains the better structure."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Frankenstein-Dracula: 3.Bc4 Nxe4",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nc3", "The Vienna: develop, keeping the f-pawn free."],
+        ["Nf6", "The most common reply, eyeing e4."],
+        ["Bc4", "The quiet-looking alternative to f4 — with hidden teeth."],
+        ["Nxe4", "The critical test: the fork trick — Nxe4 Qh5 is the real fight."],
+        ["Qh5", "The point: threaten mate on f7 and hang the e4 knight."],
+        ["Nd6", "The only good square: block nothing, hit the c4 bishop."],
+        ["Bb3", "Keep the bishop; the threats continue."],
+        ["Nc6", "Defend e5 the greedy way — inviting the storm."],
+        ["Nb5", "The monster threat: Nxc7+ forking king and rook."],
+        ["g6", "Forced: the queen must be pushed off h5 first."],
+        ["Qf3", "Renew the f7 threat from a new angle."],
+        ["f5", "Block the diagonal — again forced."],
+        ["Qd5", "Third wave: f7 falls unless Black gives the exchange."],
+        ["Qe7", "Cover f7 and accept what's coming on c7."],
+        ["Nxc7+", "Take the fork: king and rook."],
+        ["Kd8", "Forced sidestep."],
+        ["Nxa8", "Win the exchange — but the knight is trapped in the corner."],
+        ["b6", "The famous tabiya: Black plays ...Bb7 and hunts the a8 knight."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Gambit Accepted: 3...exf4 4.e5",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nc3", "The Vienna."],
+        ["Nf6", "The main reply."],
+        ["f4", "The Vienna Gambit."],
+        ["exf4", "Accepting is the critical mistake the Vienna player must punish."],
+        ["e5", "The punishment: the f6 knight has no good square."],
+        ["Ng8", "The retreat — humiliating but forced (…Qe7 pins are met by Qe2)."],
+        ["Nf3", "Develop with a big lead and cover the Qh4+ check forever."],
+        ["d6", "Strike at the cramping e5 pawn."],
+        ["d4", "Hold the spearhead with the full center."],
+        ["dxe5", "Trade before White consolidates."],
+        ["Nxe5", "Recapture with a strong knight — d4 stays intact."],
+        ["Bd6", "Develop against the proud e5 knight."],
+        ["Bxf4", "Regain the gambit pawn with interest in development."],
+        ["Ne7", "Belated development toward safety."],
+        ["Bc4", "The classic diagonal — f7 is sensitive again."],
+        ["O-O", "Black castles out of the center at last."],
+        ["O-O", "White castles; the lead in development persists."],
+        ["Nbc6", "Challenge the e5 knight; White is simply better."],
       ],
     },
   ],

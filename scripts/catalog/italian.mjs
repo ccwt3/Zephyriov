@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Giuoco Piano, Center Attack 4.c3 + 5.d4 (ECO C54). Rank 6: Two Knights, Modern 4.d3 (ECO C55).
 export default {
   slug: "italian-game",
   name: "Italian Game",
@@ -107,6 +115,58 @@ export default {
         ["c6", "Finally shore up d5 with the pawn."],
         ["a3", "Push the b4 knight away from its defense."],
         ["Na6", "The knight retreats; White regains material with a raging attack."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Giuoco Piano: Center Attack 5.d4",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["Bc4", "The Italian bishop."],
+        ["Bc5", "Mirror development."],
+        ["c3", "Prepare d4 with pawn support."],
+        ["Nf6", "Hit e4 rather than defend passively."],
+        ["d4", "The classical center attack — the old main line of the Giuoco."],
+        ["exd4", "Take; letting White keep d4-e4 for free is worse."],
+        ["cxd4", "Recapture with the ideal pawn duo, hitting the c5 bishop."],
+        ["Bb4+", "The saving check — without it Black is simply worse."],
+        ["Bd2", "The solid main line; 7.Nc3 is the wild Greco gambit."],
+        ["Bxd2+", "Trade — keeping the bishop loses time."],
+        ["Nbxd2", "Recapture, developing at the same time."],
+        ["d5", "The classical equalizer: strike e4 before the center rolls."],
+        ["exd5", "Take — protecting e4 leaves d4 weak."],
+        ["Nxd5", "Recapture with a fine blockading knight."],
+        ["Qb3", "The critical try: double-attack d5 and b7."],
+        ["Nce7", "The main defense: hold d5 with everything."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Two Knights: Modern 4.d3",
+      moves: [
+        ["e4", "Take the center."],
+        ["e5", "Symmetrical reply."],
+        ["Nf3", "Attack e5 and develop."],
+        ["Nc6", "Defend e5."],
+        ["Bc4", "The Italian bishop."],
+        ["Nf6", "The Two Knights Defense."],
+        ["d3", "The modern choice at every level: keep the tension, skip 4.Ng5 theory."],
+        ["Be7", "Solid — avoid c3-d4 tempo hits on a c5 bishop."],
+        ["O-O", "King safety."],
+        ["O-O", "Black castles."],
+        ["Re1", "Standard e4 support before regrouping."],
+        ["d6", "Hold e5 and open the c8 bishop."],
+        ["a4", "Modern wing space — also readies Ba2 keeping the diagonal."],
+        ["Na5", "Trade-seeking: the knight hunts the strong c4 bishop."],
+        ["Ba2", "Preserve it — this bishop is White's best piece."],
+        ["c5", "Grab queenside space and give the knight a home on c6 again."],
+        ["c3", "Prepare d4 and keep the a5 knight shut out of b3/c4."],
+        ["Nc6", "Return to the center — the a5 trip fixed the queenside terms."],
+        ["Nbd2", "The familiar Italian tour toward f1-g3."],
+        ["Be6", "Offer the trade to ease the position — the modern tabiya."],
       ],
     },
   ],

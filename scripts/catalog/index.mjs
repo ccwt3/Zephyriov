@@ -12,6 +12,8 @@ import caroKann from "./caro-kann.mjs";
 import french from "./french.mjs";
 import scandinavian from "./scandinavian.mjs";
 import kingsIndian from "./kings-indian.mjs";
+import hyperAcceleratedDragon from "./hyper-accelerated-dragon.mjs";
+import kingsGambit from "./kings-gambit.mjs";
 
 export const catalog = [
   ponziani,
@@ -28,4 +30,6 @@ export const catalog = [
   french,
   scandinavian,
   kingsIndian,
+  hyperAcceleratedDragon,
+  kingsGambit,
 ];

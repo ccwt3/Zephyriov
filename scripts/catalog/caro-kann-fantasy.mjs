@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): selected per Wikibooks "Chess Opening Theory"
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...c6/2._d4/2...d5/3._f3,
+//   consulted 2026-07-17); book moves follow the cited page, with natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — explorer API was auth-gated at the time of writing.
+//   Rank 5: 3...Qb6 (ECO B12). Rank 6: Main line pawn grab 5...exd4 (ECO B12).
 export default {
   slug: "caro-kann-fantasy",
   name: "Caro-Kann: Fantasy Variation",
@@ -107,6 +115,58 @@ export default {
         ["Qb6", "Hit d4 and b2 — Black's standard counterplay."],
         ["Nc3", "Develop and simply ignore b2; d4 stays defended tactically."],
         ["Be7", "Develop; a classic French-structure battle is ahead."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Early Queen: 3...Qb6",
+      moves: [
+        ["e4", "Take the center."],
+        ["c6", "The Caro-Kann."],
+        ["d4", "Build the center."],
+        ["d5", "Challenge e4."],
+        ["f3", "The Fantasy setup."],
+        ["Qb6", "Hit d4 and b2 at once before committing any pawn."],
+        ["Nc3", "Develop and defend b2 tactically — grabbing it is poison."],
+        ["dxe4", "Take now that d4 is the only real target."],
+        ["fxe4", "Recapture, keeping the broad center."],
+        ["e5", "The central strike, hitting d4 a second time."],
+        ["Nf3", "Defend d4 by developing, as always in the Fantasy."],
+        ["exd4", "Win the pawn — White gets activity in exchange."],
+        ["Nxd4", "Recapture; the b6 queen bites on granite now."],
+        ["Bc5", "Pile on d4 and develop with tempo."],
+        ["Be3", "Meet the pressure; b2 is still tactically off-limits."],
+        ["Nf6", "Develop and decline the bait for good."],
+        ["Bc4", "The f7 diagonal — White's lead in development takes shape."],
+        ["O-O", "King safety before the center opens further."],
+        ["O-O", "White castles; every piece is aimed at the kingside."],
+        ["Nbd7", "Complete development — a tense, balanced middlegame."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Main Line Pawn Grab: 5...exd4",
+      moves: [
+        ["e4", "Take the center."],
+        ["c6", "The Caro-Kann."],
+        ["d4", "Build the center."],
+        ["d5", "Challenge e4."],
+        ["f3", "The Fantasy setup."],
+        ["dxe4", "The critical test."],
+        ["fxe4", "Recapture with the broad center."],
+        ["e5", "Strike before White consolidates."],
+        ["Nf3", "Defend d4 by developing."],
+        ["exd4", "The greedy branch: take and dare White to prove it."],
+        ["Bc4", "Prove it: hit f7 and lead in development — the Fantasy gambit."],
+        ["Be6", "The solid defense: neutralize the dangerous bishop."],
+        ["Bxe6", "Trade — keeping the attack going costs too much."],
+        ["fxe6", "Recapture; the doubled e-pawns guard d5 and f5."],
+        ["Qxd4", "Regain the pawn with a dominant central queen."],
+        ["Qxd4", "Trade queens — the safest path with the weakened structure."],
+        ["Nxd4", "Recapture with a strong central knight eyeing e6."],
+        ["Nf6", "Develop with tempo on e4."],
+        ["Nc3", "Defend e4 and complete development."],
+        ["Bc5", "Active development against d4 — near-equal endgame."],
       ],
     },
   ],

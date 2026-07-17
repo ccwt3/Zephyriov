@@ -247,12 +247,14 @@ Fuente de ambos términos: [Chess.com Published-Data API](https://www.chess.com/
 
 ## 9. Contenido del catálogo de aperturas
 
-`scripts/catalog/*.mjs` → `supabase/seed.sql`: 14 aperturas × 4 líneas × ~10 jugadas, con explicación por media-jugada.
+`scripts/catalog/*.mjs` → `supabase/seed.sql`: 16 aperturas × 6 líneas × ~10 jugadas, con explicación por media-jugada.
 
 - **Las jugadas en sí (secuencias SAN, nombres de aperturas, códigos ECO) no son objeto de copyright**: son hechos e ideas, no expresión creativa. La teoría de aperturas es de dominio público; lo protegible sería la *redacción* de un libro concreto, no la línea.
 - **Las explicaciones son originales de este proyecto**: se escribieron para Zephyriov, no se copiaron de ningún libro, curso ni base de datos. Quedan cubiertas por la licencia MIT del repo.
 - **Nota de honestidad**: las explicaciones fueron **generadas con asistencia de IA** (Claude) durante la construcción inicial y luego validadas mecánicamente con chess.js (legalidad y SAN canónico). En algunas jurisdicciones —notablemente EE. UU.— el contenido puramente generado por IA **puede no ser elegible para protección de copyright**. Esto no genera ningún riesgo de infracción hacia terceros; solo significa que la protección sobre *ese texto en particular* podría ser más débil de lo que sugiere el encabezado MIT. Relevante si el catálogo llegara a ser el activo diferenciador bajo BSL.
 - Si en el futuro se importa teoría desde una fuente externa (libro, curso, base de datos de un motor), **hay que revisar su licencia antes** y anotarla aquí.
+- Desde 2026-07-17, las aperturas nuevas o revisadas deben seguir la [metodología de curaduría basada en teoría real](README.md#metodología-de-curaduría-contenido-basado-en-teoría-real) del README (fuente + frecuencia real + trazabilidad por línea) — las líneas rank 1–4 originales quedan pendientes de auditar contra ese estándar.
+- **Contenido 2026-07-17** (ranks 5–6 y las aperturas Hyper-Accelerated Dragon y King's Gambit): las **secuencias de jugadas** (hechos, no expresión — ver arriba) se cotejaron contra **Wikibooks "Chess Opening Theory"** (CC BY-SA 4.0; en.wikibooks.org/wiki/Chess_Opening_Theory) y teoría estándar publicada. **No se copió prosa** de Wikibooks ni de ninguna otra fuente: todas las explicaciones son redacción original de este proyecto (con la misma nota de asistencia de IA del punto anterior), así que el CC BY-SA no alcanza a este repo.
 
 ---
 

@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Semi-Slav, Meran (ECO D47). Rank 6: Tarrasch Defense (ECO D34).
 export default {
   slug: "queens-gambit",
   name: "Queen's Gambit",
@@ -107,6 +115,58 @@ export default {
         ["Re8", "Contest the e-file."],
         ["O-O", "Castle; now b4-b5 or f3-e4 — two plans, one setup."],
         ["Nf8", "The standard regrouping toward e6/g6."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Semi-Slav: Meran",
+      moves: [
+        ["d4", "Take the center."],
+        ["d5", "Symmetrical reply."],
+        ["c4", "The Queen's Gambit."],
+        ["c6", "Start with the Slav move order."],
+        ["Nf3", "Develop flexibly."],
+        ["Nf6", "Natural development."],
+        ["Nc3", "Pressure d5."],
+        ["e6", "The Semi-Slav: both center pawns defended, ...dxc4 plus ...b5 loaded."],
+        ["e3", "The solid main line, avoiding the razor-sharp Botvinnik 5.Bg5."],
+        ["Nbd7", "Flexible development, supporting both ...c5 and ...e5."],
+        ["Bd3", "Natural — and now the Meran machinery starts."],
+        ["dxc4", "The Meran: take exactly when the bishop must lose a tempo."],
+        ["Bxc4", "Recapture."],
+        ["b5", "Gain the tempo and start queenside expansion."],
+        ["Bd3", "Best retreat, back on the kingside diagonal."],
+        ["a6", "Support ...b4 and prepare the freeing ...c5."],
+        ["e4", "Claim the center while Black is still unraveling."],
+        ["c5", "The thematic counter — strike d4 before e5 lands."],
+        ["e5", "Push on, hitting the f6 knight — the critical Meran fight."],
+        ["cxd4", "Take; the wild lines after Nxb5 are the Meran's main battlefield."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Tarrasch Defense",
+      moves: [
+        ["d4", "Take the center."],
+        ["d5", "Symmetrical reply."],
+        ["c4", "The Queen's Gambit."],
+        ["e6", "Hold d5."],
+        ["Nc3", "Develop with pressure on d5."],
+        ["c5", "The Tarrasch: free piece play at the price of an isolated pawn."],
+        ["cxd5", "Take toward the isolani structure White wants."],
+        ["exd5", "Recapture, keeping the strong pawn presence on d5."],
+        ["Nf3", "Develop and eye the d4/e5 squares."],
+        ["Nc6", "Support c5/d4-breaks and develop."],
+        ["g3", "The Rubinstein plan: fianchetto against the d5 pawn."],
+        ["Nf6", "Natural development."],
+        ["Bg2", "The bishop takes aim at d5 — Black's long-term burden."],
+        ["Be7", "Prepare to castle."],
+        ["O-O", "King safety."],
+        ["O-O", "Black castles; activity must compensate the structure."],
+        ["Bg5", "Pressure f6, indirectly d5 — the classic anti-Tarrasch piece."],
+        ["cxd4", "Resolve the tension before d4xc5 comes."],
+        ["Nxd4", "Recapture; the isolated d5 pawn is fixed as the target."],
+        ["h6", "Put the question to the bishop — the main tabiya of the Tarrasch."],
       ],
     },
   ],

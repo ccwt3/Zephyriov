@@ -1,3 +1,11 @@
+// Sources (see README "Metodología de curaduría"):
+//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
+//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
+//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
+//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
+//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
+//   pending — the explorer API was auth-gated at the time of writing.
+//   Rank 5: Karpov 4...Nd7 (ECO B17). Rank 6: Tartakower 5...exf6 (ECO B15).
 export default {
   slug: "caro-kann",
   name: "Caro-Kann Defense",
@@ -107,6 +115,58 @@ export default {
         ["O-O", "King safety."],
         ["O-O", "White castles too."],
         ["Be7", "Reposition; Black blockades the IQP and trades pieces."],
+      ],
+    },
+    {
+      rank: 5,
+      name: "Karpov: 4...Nd7",
+      moves: [
+        ["e4", "White takes the center."],
+        ["c6", "The Caro-Kann."],
+        ["d4", "Full center."],
+        ["d5", "Strike at e4."],
+        ["Nc3", "Defend e4 with a piece."],
+        ["dxe4", "Release the tension — the classical treatment."],
+        ["Nxe4", "Recapture with a centralized knight."],
+        ["Nd7", "The Karpov Variation: prepare ...Ngf6 without doubled pawns."],
+        ["Ng5", "The modern main line: probe f7 before Black consolidates."],
+        ["Ngf6", "Cover f7's h5-attacker routes and develop; ...h6 must wait."],
+        ["Bd3", "Aim at h7 and prepare N1f3-e5 tricks."],
+        ["e6", "Blunt the d3 bishop and open the f8 bishop."],
+        ["N1f3", "The g1 knight joins; g5 and f3 coordinate against e6/f7."],
+        ["Bd6", "Active development, controlling e5."],
+        ["Qe2", "Pile on e6 and prepare O-O-O or Ne5."],
+        ["h6", "Finally put the question to the g5 knight."],
+        ["Ne4", "Retreat with tempo play on d6 — the point of Qe2."],
+        ["Nxe4", "Trade the attacker."],
+        ["Qxe4", "Recapture, keeping h7 under watch."],
+        ["Qc7", "Cover e5/h2 tricks and prepare ...b6 or ...c5 — the tabiya."],
+      ],
+    },
+    {
+      rank: 6,
+      name: "Tartakower: 5...exf6",
+      moves: [
+        ["e4", "White takes the center."],
+        ["c6", "The Caro-Kann."],
+        ["d4", "Full center."],
+        ["d5", "Strike at e4."],
+        ["Nc3", "Defend e4 with a piece."],
+        ["dxe4", "Release the tension."],
+        ["Nxe4", "Recapture."],
+        ["Nf6", "Offer the trade — Black accepts a structural change for activity."],
+        ["Nxf6+", "Take; declining loses time."],
+        ["exf6", "The Tartakower: open the f8 bishop and keep a rock-solid king."],
+        ["c3", "Support d4 against the coming piece pressure."],
+        ["Bd6", "The bishop takes the strong kingside diagonal."],
+        ["Bd3", "Symmetrical development toward the king."],
+        ["O-O", "Castle early — Black's whole setup is built for it."],
+        ["Ne2", "Flexible: keep f3 free for the f-pawn and avoid pins."],
+        ["Re8", "The rook takes the open e-file at once."],
+        ["O-O", "King safety."],
+        ["c5", "Break at d4 — Black's active plan in this structure."],
+        ["Be3", "Hold d4 and complete development."],
+        ["Nc6", "Develop with pressure; Black's pieces fully justify the pawns."],
       ],
     },
   ],
