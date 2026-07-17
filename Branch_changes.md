@@ -1,5 +1,14 @@
 # Branch changes
 
+## 2026-07-17 — Fix: líneas sin movimientos en la librería (tope de filas de PostgREST)
+
+- **Síntoma**: tras ampliar a 6 líneas, en `/library` varias líneas (las rank 5–6 y las aperturas nuevas) mostraban solo el nombre, sin la secuencia de movimientos. Los datos SÍ estaban en la base (la migración corrió bien); el problema era de lectura.
+- **Causa**: [lib/queries/library.ts](lib/queries/library.ts) traía **todos** los `line_moves` en una sola query sin paginar. PostgREST corta cada respuesta al tope `max-rows` (1000 por defecto). El catálogo pasó de 1,120 a **1,920 filas** de movimientos, así que la respuesta se truncaba y se perdían las últimas filas insertadas — justo los ranks 5–6 y las aperturas nuevas (los nombres venían de otra query de solo 96 filas, bajo el tope, por eso sí aparecían).
+- **Fix**: nuevo helper [lib/supabase/paginate.ts](lib/supabase/paginate.ts) (`fetchAllRows`) que pagina con `.range()` hasta traer todas las filas, con `.order("id")` para que el paginado sea determinista. Aplicado a los tres puntos que hacen fetch masivo de `line_moves`: `library.ts` (el bug visible) y, de forma preventiva, `lib/queries/dashboard.ts` y `lib/actions/session.ts` (calculan la profundidad de cada carta; se truncarían igual si un usuario llegara a estudiar casi todo el catálogo = 1,920 filas, dando profundidad incorrecta).
+- Verificado: lógica de paginación probada en todos los bordes (0, 999, 1000, 1001, 1920, 3000 filas → correcto, incluido el caso exacto de 1000); typecheck, lint y build de producción en verde. **Nota de deploy**: es cambio de código de la app — en local ya aplica; en producción requiere redeploy en Vercel.
+
+[Listo :v]
+
 ## 2026-07-17 — Catálogo a 6 líneas por apertura + Hyper-Accelerated Dragon y King's Gambit
 
 - **Catálogo ampliado de 14×4 a 16×6** (96 líneas, 1,920 medias-jugadas): +2 líneas (ranks 5–6) en cada una de las 14 aperturas existentes (ej. Ruy Lopez → Open y Marshall; Queen's Gambit → Semi-Slav Meran y Tarrasch; Caro-Kann → Karpov y Tartakower; Vienna → Frankenstein-Dracula y Gambito Aceptado) y 2 aperturas nuevas con 6 líneas: **Sicilian Hyper-Accelerated Dragon** (B27) y **King's Gambit** (C30). Las líneas rank 1–4 existentes no se tocaron (su progreso SRS vive en esos `line_id`).

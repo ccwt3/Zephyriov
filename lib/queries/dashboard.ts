@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/actions/auth-helpers";
 import { getToday } from "@/lib/dates";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type { ChessColor, Profile } from "@/lib/db/types";
 import type { Grade, LineState } from "@/lib/srs/types";
 
@@ -69,11 +70,18 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // Total student moves per line, derived from the catalog.
   const lineIds = (userLines ?? []).map((l) => l.line_id as string);
-  const { data: plies } = lineIds.length
-    ? await supabase.from("line_moves").select("line_id, ply").in("line_id", lineIds)
-    : { data: [] };
+  const plies = lineIds.length
+    ? await fetchAllRows<{ line_id: string; ply: number }>((from, to) =>
+        supabase
+          .from("line_moves")
+          .select("line_id, ply")
+          .in("line_id", lineIds)
+          .order("id")
+          .range(from, to),
+      )
+    : [];
   const maxPly = new Map<string, number>();
-  for (const row of plies ?? []) {
+  for (const row of plies) {
     if (row.ply > (maxPly.get(row.line_id) ?? 0)) maxPly.set(row.line_id, row.ply);
   }
 

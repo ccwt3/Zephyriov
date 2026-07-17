@@ -17,6 +17,7 @@ import type {
   StudyMoveResult,
   SubmitResult,
 } from "@/lib/study-types";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import { requireUser } from "./auth-helpers";
 
 /** Minimum distinct new lines reviewed in a day to keep the streak (spec 10). */
@@ -72,14 +73,18 @@ async function loadLineContexts(
 
   // Count each line's total student moves from the catalog.
   const lineIds = (userLines ?? []).map((ul) => ul.line_id as string);
-  const { data: moveCounts } = lineIds.length
-    ? await supabase
-        .from("line_moves")
-        .select("line_id, ply")
-        .in("line_id", lineIds)
-    : { data: [] };
+  const moveCounts = lineIds.length
+    ? await fetchAllRows<{ line_id: string; ply: number }>((from, to) =>
+        supabase
+          .from("line_moves")
+          .select("line_id, ply")
+          .in("line_id", lineIds)
+          .order("id")
+          .range(from, to),
+      )
+    : [];
   const maxPlyByLine = new Map<string, number>();
-  for (const row of moveCounts ?? []) {
+  for (const row of moveCounts) {
     const current = maxPlyByLine.get(row.line_id) ?? 0;
     if (row.ply > current) maxPlyByLine.set(row.line_id, row.ply);
   }

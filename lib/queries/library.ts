@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/actions/auth-helpers";
 import { formatLineNotation } from "@/lib/notation";
+import { fetchAllRows } from "@/lib/supabase/paginate";
 import type { ChessColor } from "@/lib/db/types";
 
 export interface LibraryLine {
@@ -27,7 +28,7 @@ export async function getLibraryData(): Promise<LibraryOpening[]> {
   const [
     { data: openings, error: openingsError },
     { data: lines },
-    { data: moves },
+    moves,
     { data: userOpenings },
   ] = await Promise.all([
     supabase
@@ -49,10 +50,14 @@ export async function getLibraryData(): Promise<LibraryOpening[]> {
         { id: string; opening_id: string; name: string; rank: number }[]
       >(),
     // explanation is the heavy column and the library never shows it.
-    supabase
-      .from("line_moves")
-      .select("line_id, ply, san")
-      .returns<{ line_id: string; ply: number; san: string }[]>(),
+    // Paginated: the whole catalog's moves exceed PostgREST's max-rows cap.
+    fetchAllRows<{ line_id: string; ply: number; san: string }>((from, to) =>
+      supabase
+        .from("line_moves")
+        .select("line_id, ply, san")
+        .order("id")
+        .range(from, to),
+    ),
     supabase
       .from("user_openings")
       .select("id, opening_id, color")
@@ -66,7 +71,7 @@ export async function getLibraryData(): Promise<LibraryOpening[]> {
   }
 
   const movesByLine = new Map<string, { ply: number; san: string }[]>();
-  for (const m of moves ?? []) {
+  for (const m of moves) {
     const list = movesByLine.get(m.line_id) ?? [];
     list.push({ ply: m.ply, san: m.san });
     movesByLine.set(m.line_id, list);
