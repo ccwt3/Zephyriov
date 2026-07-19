@@ -1,5 +1,20 @@
 # Branch changes
 
+## 2026-07-19 — Auditoría de seguridad/calidad: el servidor deja de confiar en el cliente
+
+Cambios derivados de una auditoría del código (calidad, documentación, seguridad):
+
+- **El servidor recalcula la calificación** (el hallazgo principal): `submitLineResult` confiaba en los flags `correct`/`elapsedMs` que mandaba el navegador — un reporte forjado (p. ej. array vacío) producía un "good" instantáneo. Nuevo módulo puro [lib/srs/verify.ts](lib/srs/verify.ts) (`verifyBlockResults`): recomputa `correct` contra `line_moves`, exige que el reporte cubra exactamente los plies del bloque (sin faltantes, extras ni duplicados) y sanitiza SAN/tiempos. El contrato `StudyMoveResult` ([lib/study-types.ts](lib/study-types.ts)) se adelgazó a `{ply, playedSan, elapsedMs}` — el cliente ya no manda `correct` ni `expectedSan`.
+- **Submit atómico + errores chequeados**: el session_item se marca con `update … where result is null` verificando filas afectadas (un doble submit concurrente ya no califica dos veces), y los inserts/updates de `move_attempts` y `user_lines` que ignoraban su `error` ahora lanzan.
+- **Timezone validada**: era un input de texto libre sin validar; un valor no-IANA hacía lanzar a `Intl` en `getToday` y rompía **todas** las páginas del usuario sin vía de arreglo desde la UI. `updateSettings` valida con `isValidTimezone` y `todayInTimezone` cae a UTC como red de seguridad ([lib/dates.ts](lib/dates.ts)).
+- **Deduplicación**: el cálculo de max-ply/jugadas del estudiante (duplicado en session.ts y dashboard.ts) vive ahora en [lib/queries/line-totals.ts](lib/queries/line-totals.ts); el cierre de sesión (duplicado en library.ts) en [lib/actions/session-helpers.ts](lib/actions/session-helpers.ts) (`completeSessionIfFinished`, fuera de `"use server"` para no exponerlo como action). Tipo `ServerSupabase` exportado desde auth-helpers reemplaza los `Awaited<ReturnType<…>>` repetidos.
+- **Consistencia de fechas**: `changeOpeningColor` usaba la fecha del servidor para el reset; ahora usa `getToday(profile.timezone)` como el resto (regla de oro de fechas).
+- **Lichess**: el color del usuario se detecta buscándolo en ambos lados de la partida (antes, un blanco anónimo hacía asumir que el usuario jugó de negras); si no aparece en ninguno, la partida se salta.
+- **README actualizado**: la afirmación "el cliente nunca decide su propia nota" ahora es cierta; flujo B reescrito (incluye quitar el paso `revalidatePath` que ya no existía en el código), módulos nuevos en el árbol, y notas de validación en Seguridad y Manejo de fechas.
+- Verificado: `tsc --noEmit`, lint y build de producción en verde; 35 tests Vitest (29 previos + 6 nuevos de `verifyBlockResults`). El flujo de estudio end-to-end con datos vivos no se ejercitó en navegador (requiere sesión con líneas pendientes en la DB); smoke test de arranque OK.
+
+[Listo :v]
+
 ## 2026-07-19 — Fix: la última línea saltaba a la pantalla final sin dejar leer el grading
 
 - **Síntoma**: al contestar la última línea de la sesión, el panel de grading (badge + explicación) se cargaba y desaparecía solo, redirigiendo a la pantalla de "sesión completa" sin dar chance de leerlo ni de pulsar *Continue*.

@@ -23,3 +23,6 @@ export async function requireUser() {
 
   return { supabase, userId, profile };
 }
+
+/** The RLS-scoped Supabase client that requireUser resolves. */
+export type ServerSupabase = Awaited<ReturnType<typeof requireUser>>["supabase"];

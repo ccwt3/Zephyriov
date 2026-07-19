@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isValidTimezone } from "@/lib/dates";
 import type { AnalysisTimeControl } from "@/lib/db/types";
 import { requireUser } from "./auth-helpers";
 
@@ -24,13 +25,19 @@ export async function updateSettings(input: SettingsInput): Promise<void> {
   if (timeControls.length === 0) {
     throw new Error("Select at least one time control");
   }
+  const timezone = input.timezone.trim() || "UTC";
+  if (!isValidTimezone(timezone)) {
+    throw new Error(
+      `Unknown timezone "${timezone}" — use an IANA name like America/Mexico_City`,
+    );
+  }
 
   const { error } = await supabase
     .from("profiles")
     .update({
       lines_per_session: linesPerSession,
       moves_per_block: movesPerBlock,
-      timezone: input.timezone || "UTC",
+      timezone,
       analysis_time_controls: timeControls,
     })
     .eq("user_id", userId);

@@ -22,12 +22,12 @@ export interface StudyItem {
   moves: StudyMove[];
 }
 
-/** Per-move outcome reported by the study board. */
+/** Per-move report sent by the study board. The server treats it as
+ *  untrusted input: correctness is recomputed against the catalog and the
+ *  report must cover exactly the block's plies (lib/srs/verify.ts). */
 export interface StudyMoveResult {
   ply: number;
-  expectedSan: string;
   playedSan: string;
-  correct: boolean;
   elapsedMs: number;
 }
 

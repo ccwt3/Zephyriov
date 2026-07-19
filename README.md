@@ -100,7 +100,7 @@ Tres capas con una regla central: **la lógica de dominio (SRS) es pura y no hac
 
 Decisiones clave:
 
-- **Calificación server-side**: el cliente reporta jugadas crudas (`move_attempts`); el grade y el update SRS se calculan en el servidor (`lib/actions/session.ts`). El cliente nunca decide su propia nota.
+- **Calificación server-side**: el cliente solo reporta jugadas crudas (`ply`, SAN jugado, tiempo); el servidor recalcula la corrección contra `line_moves`, valida que el reporte cubra exactamente el bloque (`lib/srs/verify.ts`) y de ahí deriva el grade y el update SRS (`lib/actions/session.ts`). El cliente nunca decide su propia nota — un reporte forjado (vacío, plies de más/de menos, duplicados) se rechaza antes de calificar.
 - **Motor SRS puro**: `lib/srs/` no importa Supabase ni Next — recibe datos y devuelve decisiones. Por eso es 100% testeable con Vitest.
 - **Catálogo curado y validado**: el contenido se autora en `scripts/catalog/*.mjs` y el generador valida cada SAN con chess.js antes de emitir SQL — imposible sembrar una línea ilegal.
 - **Multiusuario desde el día 1**: todo el modelo lleva `user_id` + RLS aunque hoy haya una sola cuenta.
@@ -127,9 +127,11 @@ lib/
     grading.ts             Califica un bloque de jugadas → bad/mid/good
     scheduler.ts           Aplica la nota a la tarjeta → próximo due date
     session-builder.ts     Arma la sesión diaria (due + nuevas round-robin)
+    verify.ts              Valida el reporte del cliente y recomputa `correct`
     types.ts               Grade, LineState, CardState, MoveResult
   actions/               Server actions ("use server") — todas las escrituras
     auth-helpers.ts        requireUser(): client + userId + profile
+    session-helpers.ts     Internos compartidos entre actions (sin "use server")
     session.ts             Crear sesión del día, calificar bloques, streak
     onboarding.ts          Analizar partidas, confirmar aperturas, cambiar color
     library.ts             addOpening / removeOpening (librería)
@@ -137,6 +139,7 @@ lib/
   queries/
     dashboard.ts           getDashboardData(): lectura agregada para Home/Progress/Settings
     library.ts             getLibraryData(): catálogo completo + estado "en estudio"
+    line-totals.ts         Max ply por línea + jugadas del estudiante por color
   notation.ts            formatLineNotation(): plies → "1.e4 e5 2.Nf3" (+ test)
   external/              Clientes de APIs públicas (sin tokens)
     lichess.ts             ndjson de partidas recientes
@@ -232,21 +235,26 @@ Browser ── GET / ──▶ proxy.ts
    · El estudiante mueve por drag o click-click → tryMove():
        - jugada ilegal → rebota, sin penalización
        - correcta → avanza; incorrecta → se muestra 900ms y se revela la teoría
-   · Cada intento se acumula localmente: {ply, expectedSan, playedSan, correct, elapsedMs}
+   · Cada intento se acumula localmente: {ply, playedSan, elapsedMs}
 
 3. Bloque terminado → el cliente invoca submitLineResult(sessionItemId, results)
    (server action = POST automático de Next)
 
 4. En el servidor:                                        [lib/actions/session.ts]
    a. requireUser() + getToday(timezone)
-   b. gradeBlock(results, isFirstBlock)   → bad/mid/good  [lib/srs/grading.ts]
-   c. inserta move_attempts (auditoría) y marca el session_item
-   d. applyGrade(card, grade, today)      → nueva CardState [lib/srs/scheduler.ts]
-   e. update de user_lines (state, interval, due_date, unlocked_moves…)
+   b. verifyBlockResults(results, teoría) [lib/srs/verify.ts]
+      recomputa `correct` contra line_moves y exige que el reporte
+      cubra exactamente los plies del bloque (input no confiable)
+   c. gradeBlock(verified, isFirstBlock)  → bad/mid/good  [lib/srs/grading.ts]
+   d. marca el session_item de forma atómica (update … where result is null:
+      un doble submit concurrente pierde la carrera) e inserta move_attempts
+   e. applyGrade(card, grade, today)      → nueva CardState [lib/srs/scheduler.ts]
+      y update de user_lines (state, interval, due_date, unlocked_moves…)
    f. ¿repeatInSession? → inserta un nuevo session_item (attempt_number+1)
       y lo devuelve para que el cliente lo encole al final
-   g. maybeCompleteSession() + updateStreak()
-   h. revalidatePath("/") → el Home refleja el progreso
+   g. completeSessionIfFinished() + updateStreak()
+      (sin revalidatePath a propósito — refrescaría /study y taparía el
+      panel de grading; el dashboard es dinámico y refetchea solo)
 
 5. El cliente muestra el GradeBadge y "Continue" pasa a la siguiente línea.
 ```
@@ -300,6 +308,8 @@ Tres capas independientes:
 1. **Proxy/middleware** ([lib/supabase/proxy.ts](lib/supabase/proxy.ts)): corre en cada request, refresca el token en cookies (`getClaims()`) y redirige a `/auth/login` si no hay usuario. Rutas públicas: todo `/auth/*`, `/manifest.webmanifest`, `/sw.js`.
 2. **`requireUser()`** en cada action/query: defensa en profundidad si algo esquiva el proxy.
 3. **RLS en Postgres** (la garantía real): el catálogo es `select`-only para usuarios autenticados; toda tabla de usuario exige `user_id = auth.uid()`. `session_items` y `move_attempts` no llevan `user_id` — heredan la propiedad vía `exists(...)` contra su sesión padre. Aunque el código del servidor tuviera un bug, un usuario no puede leer/escribir filas ajenas.
+
+Además, el servidor **no confía en el input del cliente ni para los datos propios**: el reporte de jugadas se valida y recalcula contra el catálogo antes de calificar ([lib/srs/verify.ts](lib/srs/verify.ts)); los session_items se marcan con un update atómico (`where result is null`) para que un doble submit no califique dos veces; los números de settings se clampean y el timezone se valida contra `Intl` server-side ([lib/actions/settings.ts](lib/actions/settings.ts)).
 
 Los perfiles se crean solos: trigger `on_auth_user_created` → inserta `profiles` con defaults (6 líneas/sesión, bloques de 4, timezone UTC).
 
@@ -398,6 +408,7 @@ Ambos se piden con `cache: "no-store"` y `Promise.allSettled`: si una fuente fal
 Regla de oro: **el SRS trabaja con strings `yyyy-mm-dd`, nunca con `Date` en operaciones de dominio.** Eso elimina bugs de timezone/DST y permite comparar con `<=` lexicográfico.
 
 - **"Hoy" es del usuario, no del servidor**: `getToday(profile.timezone)` ([lib/dates.ts](lib/dates.ts)) formatea la fecha actual en la timezone IANA del perfil (`Intl.DateTimeFormat("en-CA")` produce yyyy-mm-dd). El rollover del día — cuándo aparece una sesión nueva — sigue la timezone configurada en Settings.
+- **Timezone validada y con red de seguridad**: `updateSettings` rechaza cualquier valor que `Intl` no acepte (`isValidTimezone`), y `todayInTimezone` cae a UTC si aun así llegara un valor inválido a la DB — un timezone roto nunca debe tumbar todas las páginas del usuario.
 - **Aritmética**: `addDays(isoDate, n)` ([scheduler.ts](lib/srs/scheduler.ts)) opera en UTC puro (`T00:00:00Z`) para que sumar días jamás drifte por DST.
 - **Override en desarrollo**: la cookie `zephyriov-dev-date` reemplaza "hoy" (solo con `NODE_ENV=development`) para simular el paso de días.
 - **Columnas**: `due_date` y `session_date` son `date` en Postgres y viajan como strings; los timestamps de auditoría (`created_at`, `completed_at`…) sí son `timestamptz`.
@@ -476,7 +487,7 @@ En onboarding, el tab **"Build my own"** usa el mismo catálogo ([components/onb
 pnpm test
 ```
 
-Vitest cubre el motor SRS puro ([lib/srs/__tests__/](lib/srs/__tests__/)): calificación de bloques (primer bloque vs acumulado, errores, lentitud), scheduler (graduación, lapses, crecimiento de intervalos, desbloqueo de profundidad) y armado de sesión (due filtering, round-robin, pool agotado). La lógica con I/O (actions) se mantiene delgada precisamente para que lo testeable esté aquí.
+Vitest cubre el motor SRS puro ([lib/srs/__tests__/](lib/srs/__tests__/)): calificación de bloques (primer bloque vs acumulado, errores, lentitud), scheduler (graduación, lapses, crecimiento de intervalos, desbloqueo de profundidad), armado de sesión (due filtering, round-robin, pool agotado) y verificación del reporte del cliente (recomputo de `correct`, rechazo de reportes vacíos/incompletos/duplicados). La lógica con I/O (actions) se mantiene delgada precisamente para que lo testeable esté aquí.
 
 ## PWA
 
@@ -516,6 +527,7 @@ Lo demás ya está puesto: cero copyleft en runtime, piezas bajo BSD-3, fuentes 
 | Quiero… | Archivo(s) |
 |---|---|
 | Cambiar cómo se califica un bloque | [lib/srs/grading.ts](lib/srs/grading.ts) (+ sus tests) |
+| Cambiar cómo se valida el reporte del cliente | [lib/srs/verify.ts](lib/srs/verify.ts) (+ sus tests) |
 | Cambiar intervalos/ease del scheduler | [lib/srs/scheduler.ts](lib/srs/scheduler.ts) (+ sus tests) |
 | Cambiar qué entra en la sesión diaria | [lib/srs/session-builder.ts](lib/srs/session-builder.ts) |
 | Cambiar la regla del streak | `updateStreak` en [lib/actions/session.ts](lib/actions/session.ts) |

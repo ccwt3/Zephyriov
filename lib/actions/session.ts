@@ -3,6 +3,7 @@
 import { gradeBlock } from "@/lib/srs/grading";
 import { applyGrade, addDays } from "@/lib/srs/scheduler";
 import { buildSession } from "@/lib/srs/session-builder";
+import { verifyBlockResults } from "@/lib/srs/verify";
 import type { CardState } from "@/lib/srs/types";
 import { getToday } from "@/lib/dates";
 import type {
@@ -16,8 +17,9 @@ import type {
   StudyMoveResult,
   SubmitResult,
 } from "@/lib/study-types";
-import { fetchAllRows } from "@/lib/supabase/paginate";
-import { requireUser } from "./auth-helpers";
+import { fetchMaxPlyByLine, studentMoveCount } from "@/lib/queries/line-totals";
+import { requireUser, type ServerSupabase } from "./auth-helpers";
+import { completeSessionIfFinished } from "./session-helpers";
 
 /** Minimum distinct new lines reviewed in a day to keep the streak (spec 10). */
 const STREAK_NEW_LINES = 3;
@@ -45,7 +47,7 @@ function diffDays(from: string, to: string): number {
 }
 
 async function loadLineContexts(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  supabase: ServerSupabase,
   userId: string,
 ): Promise<Map<string, LineContext>> {
   const [{ data: userOpenings }, { data: userLines }] = await Promise.all([
@@ -72,21 +74,7 @@ async function loadLineContexts(
 
   // Count each line's total student moves from the catalog.
   const lineIds = (userLines ?? []).map((ul) => ul.line_id as string);
-  const moveCounts = lineIds.length
-    ? await fetchAllRows<{ line_id: string; ply: number }>((from, to) =>
-        supabase
-          .from("line_moves")
-          .select("line_id, ply")
-          .in("line_id", lineIds)
-          .order("id")
-          .range(from, to),
-      )
-    : [];
-  const maxPlyByLine = new Map<string, number>();
-  for (const row of moveCounts) {
-    const current = maxPlyByLine.get(row.line_id) ?? 0;
-    if (row.ply > current) maxPlyByLine.set(row.line_id, row.ply);
-  }
+  const maxPlyByLine = await fetchMaxPlyByLine(supabase, lineIds);
 
   const contexts = new Map<string, LineContext>();
   for (const ul of userLines ?? []) {
@@ -100,8 +88,7 @@ async function loadLineContexts(
     if (!opening) continue; // line belongs to a deactivated opening
 
     const maxPly = maxPlyByLine.get(line.id) ?? 0;
-    const totalStudentMoves =
-      opening.color === "white" ? Math.ceil(maxPly / 2) : Math.floor(maxPly / 2);
+    const totalStudentMoves = studentMoveCount(maxPly, opening.color);
 
     contexts.set(ul.id as string, {
       userLine: ul as unknown as UserLine,
@@ -116,7 +103,7 @@ async function loadLineContexts(
 }
 
 async function buildStudyItem(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  supabase: ServerSupabase,
   item: Pick<SessionItem, "id" | "item_type" | "attempt_number">,
   context: LineContext,
 ): Promise<StudyItem> {
@@ -259,29 +246,54 @@ export async function submitLineResult(
   const context = contexts.get(item.user_line_id);
   if (!context) throw new Error("Line context not found");
 
-  // Grade server-side from the raw per-move results.
+  // Verify the report against the catalog before grading: the client's
+  // `results` are untrusted, so correctness is recomputed from line_moves
+  // and the report must cover exactly the plies of this block.
+  const blockPlies = pliesForBlock(
+    Math.min(context.userLine.unlocked_moves, context.totalStudentMoves),
+    context.studentColor,
+  );
+  const { data: blockMoves, error: movesError } = await supabase
+    .from("line_moves")
+    .select("ply, san")
+    .eq("line_id", context.userLine.line_id)
+    .lte("ply", blockPlies)
+    .order("ply")
+    .returns<{ ply: number; san: string }[]>();
+  if (movesError) throw new Error(movesError.message);
+
+  const studentPliesOdd = context.studentColor === "white";
+  const expected = (blockMoves ?? []).filter(
+    (m) => (m.ply % 2 === 1) === studentPliesOdd,
+  );
+  const verified = verifyBlockResults(results, expected);
+
   const isFirstBlock =
     context.userLine.unlocked_moves <= profile.moves_per_block;
-  const grade = gradeBlock(
-    results.map((r) => ({ correct: r.correct, elapsedMs: r.elapsedMs })),
-    isFirstBlock,
-  );
+  const grade = gradeBlock(verified, isFirstBlock);
 
-  await supabase.from("move_attempts").insert(
-    results.map((r) => ({
-      session_item_id: sessionItemId,
-      ply: r.ply,
-      expected_san: r.expectedSan,
-      played_san: r.playedSan,
-      is_correct: r.correct,
-      elapsed_ms: Math.round(r.elapsedMs),
-    })),
-  );
-
-  await supabase
+  // Claim the item atomically: a concurrent duplicate submit loses the race
+  // instead of grading (and updating the card) twice.
+  const { data: claimed, error: claimError } = await supabase
     .from("session_items")
     .update({ result: grade, completed_at: new Date().toISOString() })
-    .eq("id", sessionItemId);
+    .eq("id", sessionItemId)
+    .is("result", null)
+    .select("id");
+  if (claimError) throw new Error(claimError.message);
+  if (!claimed?.length) throw new Error("Item already graded");
+
+  const { error: attemptsError } = await supabase.from("move_attempts").insert(
+    verified.map((v) => ({
+      session_item_id: sessionItemId,
+      ply: v.ply,
+      expected_san: v.expectedSan,
+      played_san: v.playedSan,
+      is_correct: v.correct,
+      elapsed_ms: v.elapsedMs,
+    })),
+  );
+  if (attemptsError) throw new Error(attemptsError.message);
 
   // SRS update.
   const card: CardState = {
@@ -297,7 +309,7 @@ export async function submitLineResult(
     movesPerBlock: profile.moves_per_block,
   });
 
-  await supabase
+  const { error: lineError } = await supabase
     .from("user_lines")
     .update({
       state: updated.state,
@@ -309,6 +321,7 @@ export async function submitLineResult(
       last_result: grade,
     })
     .eq("id", context.userLine.id);
+  if (lineError) throw new Error(lineError.message);
 
   // Re-queue at the end of the session when needed.
   let requeuedItem: StudyItem | null = null;
@@ -350,7 +363,10 @@ export async function submitLineResult(
     requeuedItem = await buildStudyItem(supabase, requeued, freshContext);
   }
 
-  const sessionCompleted = await maybeCompleteSession(supabase, item.session_id);
+  const sessionCompleted = await completeSessionIfFinished(
+    supabase,
+    item.session_id,
+  );
   await updateStreak(supabase, userId, item.session_id, today, sessionCompleted);
 
   // When the line repeats in this session there is no meaningful new date
@@ -366,32 +382,13 @@ export async function submitLineResult(
   return { grade, repeatInSession, nextDue, requeuedItem, sessionCompleted };
 }
 
-async function maybeCompleteSession(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
-  sessionId: string,
-): Promise<boolean> {
-  const { count } = await supabase
-    .from("session_items")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", sessionId)
-    .is("result", null);
-
-  if ((count ?? 0) > 0) return false;
-  await supabase
-    .from("study_sessions")
-    .update({ status: "completed", completed_at: new Date().toISOString() })
-    .eq("id", sessionId)
-    .eq("status", "in_progress");
-  return true;
-}
-
 /**
  * Keeps the streak alive once at least 3 distinct new lines were reviewed
  * today (or every new line in the session when fewer than 3 exist). When
  * the new-line pool is exhausted, completing the review session counts.
  */
 async function updateStreak(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  supabase: ServerSupabase,
   userId: string,
   sessionId: string,
   today: string,

@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/actions/auth-helpers";
 import { getToday } from "@/lib/dates";
-import { fetchAllRows } from "@/lib/supabase/paginate";
+import { fetchMaxPlyByLine, studentMoveCount } from "@/lib/queries/line-totals";
 import type { ChessColor, Profile } from "@/lib/db/types";
 import type { Grade, LineState } from "@/lib/srs/types";
 
@@ -70,20 +70,7 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // Total student moves per line, derived from the catalog.
   const lineIds = (userLines ?? []).map((l) => l.line_id as string);
-  const plies = lineIds.length
-    ? await fetchAllRows<{ line_id: string; ply: number }>((from, to) =>
-        supabase
-          .from("line_moves")
-          .select("line_id, ply")
-          .in("line_id", lineIds)
-          .order("id")
-          .range(from, to),
-      )
-    : [];
-  const maxPly = new Map<string, number>();
-  for (const row of plies) {
-    if (row.ply > (maxPly.get(row.line_id) ?? 0)) maxPly.set(row.line_id, row.ply);
-  }
+  const maxPly = await fetchMaxPlyByLine(supabase, lineIds);
 
   const colorByOpening = new Map(
     (userOpenings ?? []).map((uo) => [uo.opening_id as string, uo.color as ChessColor]),
@@ -102,7 +89,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (!color) continue;
 
     const ply = maxPly.get(ul.line_id as string) ?? 0;
-    const totalMoves = color === "white" ? Math.ceil(ply / 2) : Math.floor(ply / 2);
+    const totalMoves = studentMoveCount(ply, color);
     if ((ul.due_date as string) <= today) dueCount++;
 
     const list = linesByOpening.get(line.opening_id) ?? [];

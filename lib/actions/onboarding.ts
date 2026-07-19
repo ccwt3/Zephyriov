@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getToday } from "@/lib/dates";
 import { fetchLichessGames } from "@/lib/external/lichess";
 import { fetchChesscomGames } from "@/lib/external/chesscom";
 import {
@@ -182,10 +183,11 @@ export async function changeOpeningColor(
     .single<{ id: string; opening_id: string }>();
   if (error || !userOpening) throw new Error("Opening not found");
 
-  await supabase
+  const { error: colorError } = await supabase
     .from("user_openings")
     .update({ color })
     .eq("id", userOpening.id);
+  if (colorError) throw new Error(colorError.message);
 
   const { data: lines } = await supabase
     .from("opening_lines")
@@ -194,13 +196,13 @@ export async function changeOpeningColor(
     .returns<{ id: string }[]>();
 
   if (lines?.length) {
-    await supabase
+    const { error: resetError } = await supabase
       .from("user_lines")
       .update({
         state: "new",
         unlocked_moves: profile.moves_per_block,
         interval_days: 0,
-        due_date: new Date().toISOString().slice(0, 10),
+        due_date: await getToday(profile.timezone),
         reps: 0,
         lapses: 0,
         last_result: null,
@@ -210,6 +212,7 @@ export async function changeOpeningColor(
         "line_id",
         lines.map((l) => l.id),
       );
+    if (resetError) throw new Error(resetError.message);
   }
 
   revalidatePath("/", "layout");

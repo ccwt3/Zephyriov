@@ -59,8 +59,15 @@ export async function fetchLichessGames(
     const openingName = game.opening?.name;
     if (!openingName) continue;
 
+    // Match the user on either side; skip games where neither side matches
+    // (e.g. anonymous players) instead of guessing the color.
     const whiteName = game.players?.white?.user?.name?.toLowerCase();
-    const color = whiteName === lowerUser ? "white" : "black";
+    const blackName = game.players?.black?.user?.name?.toLowerCase();
+    let color: "white" | "black";
+    if (whiteName === lowerUser) color = "white";
+    else if (blackName === lowerUser) color = "black";
+    else continue;
+
     games.push({ openingName, eco: game.opening?.eco ?? null, color });
   }
   return games;

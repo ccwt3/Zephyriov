@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getToday } from "@/lib/dates";
 import type { ChessColor, Opening, OpeningLine } from "@/lib/db/types";
-import { requireUser } from "./auth-helpers";
+import { requireUser, type ServerSupabase } from "./auth-helpers";
+import { completeSessionIfFinished } from "./session-helpers";
 
 /**
  * Adds a catalog opening to the user's studies (without touching the rest
@@ -125,7 +126,7 @@ export async function removeOpening(userOpeningId: string): Promise<void> {
  * re-run that check.
  */
 async function dropPendingItemsForOpening(
-  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  supabase: ServerSupabase,
   userId: string,
   openingId: string,
   timezone: string,
@@ -160,17 +161,5 @@ async function dropPendingItemsForOpening(
     .in("user_line_id", userLines.map((ul) => ul.id));
   if (deleteError) throw new Error(deleteError.message);
 
-  // Same completion check as session.ts's maybeCompleteSession.
-  const { count } = await supabase
-    .from("session_items")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", session.id)
-    .is("result", null);
-  if ((count ?? 0) === 0) {
-    await supabase
-      .from("study_sessions")
-      .update({ status: "completed", completed_at: new Date().toISOString() })
-      .eq("id", session.id)
-      .eq("status", "in_progress");
-  }
+  await completeSessionIfFinished(supabase, session.id);
 }

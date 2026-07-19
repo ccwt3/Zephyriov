@@ -175,9 +175,7 @@ function LineQuiz({
       const correct = played.san === currentMove.san;
       resultsRef.current.push({
         ply: currentMove.ply,
-        expectedSan: currentMove.san,
         playedSan: played.san,
-        correct,
         elapsedMs,
       });
       setFeedback({

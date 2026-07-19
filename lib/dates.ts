@@ -2,11 +2,28 @@ import { cookies } from "next/headers";
 
 export const DEV_DATE_COOKIE = "zephyriov-dev-date";
 
-/** Today as yyyy-mm-dd in the given IANA timezone. */
+/** True when the string is a timezone Intl accepts (IANA name or alias). */
+export function isValidTimezone(timezone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: timezone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Today as yyyy-mm-dd in the given IANA timezone. An invalid stored value
+ *  falls back to UTC — a bad timezone must never take down every page. */
 export function todayInTimezone(timezone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone || "UTC",
-  }).format(new Date());
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone || "UTC",
+    }).format(new Date());
+  } catch {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "UTC" }).format(
+      new Date(),
+    );
+  }
 }
 
 /**
