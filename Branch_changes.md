@@ -1,5 +1,14 @@
 # Branch changes
 
+## 2026-07-19 — Fix: la última línea saltaba a la pantalla final sin dejar leer el grading
+
+- **Síntoma**: al contestar la última línea de la sesión, el panel de grading (badge + explicación) se cargaba y desaparecía solo, redirigiendo a la pantalla de "sesión completa" sin dar chance de leerlo ni de pulsar *Continue*.
+- **Causa**: `submitLineResult` ([lib/actions/session.ts](lib/actions/session.ts)) terminaba con `revalidatePath("/")`. En el App Router, revalidar desde un server action también refresca el árbol RSC de la **ruta actual**: `/study` se re-renderizaba en el servidor y, con el último ítem ya calificado, `pendingItems` quedaba vacío, así que [app/study/page.tsx](app/study/page.tsx:29) sustituía el `<StudySession>` (y su panel de grading) por la tarjeta "All done for today".
+- **Fix**: se eliminó ese `revalidatePath`. El dashboard `/` es dinámico (lee cookies vía Supabase, no hay nada cacheado), así que ya refetcheaba en cada visita — la revalidación no aportaba nada y solo provocaba el salto. Ahora la pantalla final llega solo al pulsar *Continue*, como el resto de las líneas.
+- Verificado: `tsc --noEmit` en verde. La reproducción end-to-end en navegador no se corrió (requiere una sesión con línea pendiente en la DB viva); el cambio es una eliminación de una sola línea con causa identificada en el código.
+
+[Listo :v]
+
 ## 2026-07-17 — Fix: líneas sin movimientos en la librería (tope de filas de PostgREST)
 
 - **Síntoma**: tras ampliar a 6 líneas, en `/library` varias líneas (las rank 5–6 y las aperturas nuevas) mostraban solo el nombre, sin la secuencia de movimientos. Los datos SÍ estaban en la base (la migración corrió bien); el problema era de lectura.

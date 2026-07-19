@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { gradeBlock } from "@/lib/srs/grading";
 import { applyGrade, addDays } from "@/lib/srs/scheduler";
 import { buildSession } from "@/lib/srs/session-builder";
@@ -360,7 +359,10 @@ export async function submitLineResult(
     ? null
     : { date: updated.dueDate, inDays: diffDays(today, updated.dueDate) };
 
-  revalidatePath("/");
+  // No revalidatePath here on purpose: revalidating from a server action also
+  // refreshes the current route, which would re-render /study with an empty
+  // queue and replace the grade panel with the end-of-session screen before
+  // the student can read it. The dashboard is dynamic, so it refetches anyway.
   return { grade, repeatInSession, nextDue, requeuedItem, sessionCompleted };
 }
 
