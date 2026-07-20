@@ -1,11 +1,11 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Averbakh Variation (ECO E73). Rank 6: Makagonov System 6.h3 (ECO E71/E90).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO E60-E99.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): rank 2
+//   (Sämisch) tail switched to the calmer 10.Kb1. Documented exception: the
+//   Sämisch keeps the classical book move 6...e5 (the engine slightly prefers
+//   the 6...c5 gambit); KID finals hover around +0.6/+0.7 for White — the
+//   opening's honest engine verdict.
 export default {
   slug: "kings-indian",
   name: "King's Indian Defense",
@@ -61,8 +61,8 @@ export default {
         ["f5", "The thematic break, gaining kingside space."],
         ["O-O-O", "Opposite wings: a pure attacking race."],
         ["Nd7", "Bring the last knight toward c5 and f6 duties."],
-        ["exf5", "White trades to open lines for the g4 push."],
-        ["gxf5", "Recapture toward the center, keeping the pawn mass rolling."],
+        ["Kb1", "The standard prophylactic tuck before the storms break."],
+        ["fxe4", "Open the f-file — Black's play arrives first on that wing."],
       ],
     },
     {

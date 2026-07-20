@@ -1,11 +1,8 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Open Variation (ECO C80-C83). Rank 6: Marshall Attack (ECO C89).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO C60-C89.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): all six
+//   lines passed clean — no changes needed.
 export default {
   slug: "ruy-lopez",
   name: "Ruy Lopez",

@@ -1,13 +1,12 @@
 // Sources (see README "Metodología de curaduría"):
-//   Added 2026-07-17. Selected per Wikibooks "Chess Opening Theory"
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e5/2._f4, consulted
-//   2026-07-17): 2...exf4 is the main move (3.Nf3 King's Knight Gambit and
-//   3.Bc4 Bishop's Gambit); 2...d5 (Falkbeer) is the main modern decline and
-//   2...Bc5 the classical decline. Book moves follow the cited pages and
-//   standard published theory for the named variations (ECO C30-C39), with
-//   natural-play extensions past book depth. Masters-DB frequency check
-//   (scripts/verify-lines.mjs) pending — explorer API was auth-gated at the
-//   time of writing.
+//   Theory: Wikibooks "Chess Opening Theory" 1.e4 e5 2.f4 pages (consulted
+//   2026-07-17): 2...exf4 main (3.Nf3 / 3.Bc4), 2...d5 Falkbeer and 2...Bc5
+//   classical declines (ECO C30-C39).
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): tails of
+//   ranks 2, 3, 5, 6 rebuilt (7.Nc3 in the Modern, ...Bxc1 in the Fischer,
+//   7.Na4! in the Classical Declined, ...Qxe2+ in the Falkbeer). Documented
+//   exception: 2.f4 itself costs ~0.6 by engine count — that IS the King's
+//   Gambit; every line now ends within the 0.7 bar for White.
 export default {
   slug: "kings-gambit",
   name: "King's Gambit",
@@ -57,14 +56,14 @@ export default {
         ["c6", "Block and hit the bishop — the critical reply."],
         ["dxc6", "Take en route; the structure clarifies."],
         ["Nxc6", "Recapture with easy development for the pawn's return."],
-        ["d4", "Build the center and open the c1 bishop toward f4."],
+        ["Nc3", "Develop — the initiative matters more than the f4 pawn."],
+        ["Be6", "Develop and blunt any c4-diagonal ideas."],
+        ["d4", "Claim the center; f4 will be rounded up in time."],
         ["Bd6", "Overprotect f4 and aim at h2 — Black's active setup."],
-        ["O-O", "Castle; the half-open f-file is White's compensation."],
-        ["O-O", "Black castles too."],
-        ["Nc3", "Develop; both sides are fully mobilized."],
-        ["Bg4", "Pin the f3 knight — the fight is over f4 and d4."],
-        ["Bxc6", "Trade first, damaging the queenside structure."],
-        ["bxc6", "Recapture; two bishops versus better pawns — rich play."],
+        ["Ne5", "Centralize, offering a trade White welcomes."],
+        ["Bxe5", "Trade — letting the knight sit on e5 is worse."],
+        ["dxe5", "Recapture with a cramping pawn; f4 finally falls next."],
+        ["Qxd1+", "Trade queens — a level, honest endgame for both sides."],
       ],
     },
     {
@@ -90,7 +89,7 @@ export default {
         ["g3", "The thematic break: the f4 chain must be dissolved."],
         ["fxg3", "Take — holding everything is impossible now."],
         ["Nxg3", "Recapture with the knight, opening lines at last."],
-        ["Ne7", "Develop; material vs open lines — the Fischer battleground."],
+        ["Bxc1", "Cash the dark-square bishops; material returns to balance."],
       ],
     },
     {
@@ -135,14 +134,14 @@ export default {
         ["Nc6", "Complete the knights; the position stays tense."],
         ["d3", "Support e4 and open the c1 bishop."],
         ["Bg4", "Pin the f3 knight — pressure against f4's support."],
-        ["h3", "Put the question immediately."],
-        ["Bxf3", "Trade — keeping the pin costs a piece to g4-h5 traps."],
-        ["Qxf3", "Recapture; the queen supports the coming f4-f5 or fxe5."],
-        ["exf4", "Take at the best moment, exposing e4."],
-        ["Bxf4", "Recapture with the bishop, completing development."],
-        ["Nd4", "The point of Black's play: hit the queen and c2."],
-        ["Qd1", "Retreat, covering c2 — the endgame squares matter."],
-        ["O-O", "Castle; a balanced, maneuvering middlegame follows."],
+        ["Na4", "The thematic hunt: remove the bishop that forbids O-O."],
+        ["exf4", "Take while the knight is distracted."],
+        ["Nxc5", "Complete the mission: the dark-square bishop falls."],
+        ["dxc5", "Recapture; the d-file half-opens for Black's queen."],
+        ["Bxf4", "Regain the pawn with the better structure."],
+        ["O-O", "Black castles."],
+        ["O-O", "Castle at last — the whole point of trading that bishop."],
+        ["Nd4", "Centralize with tempo; a balanced middlegame follows."],
       ],
     },
     {
@@ -168,7 +167,7 @@ export default {
         ["Be3", "Break the tension by offering the dark-square trade."],
         ["Nxc3", "The forcing sequence begins: take toward the queen trade."],
         ["Bxc5", "In-between: take the bishop with tempo on the queen."],
-        ["Nxe2", "Take the queen; after Bxe7 Nxf4 the storm ends level."],
+        ["Qxe2+", "Trade queens; after Bxe2 ...Nd7 regains the piece — dead level."],
       ],
     },
   ],

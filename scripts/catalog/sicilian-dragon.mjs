@@ -1,11 +1,10 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Yugoslav 9.g4 (ECO B76). Rank 6: Fianchetto 6.g3 (ECO B70).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO B70-B76.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): all lines
+//   clean; only the rank 3 (Levenfish) final move was fixed — with the e-file
+//   open after exd6/exd6, ...Be7 is correct where the old ...Bg7 ran into
+//   tactics against c6/d6.
 export default {
   slug: "sicilian-dragon",
   name: "Sicilian Dragon",
@@ -88,7 +87,7 @@ export default {
         ["exd6", "Release the tension before ...dxe5 favors Black."],
         ["exd6", "Recapture; Black's center pawns are fine and the bishops breathe."],
         ["Be2", "Develop and prepare O-O."],
-        ["Bg7", "The Dragon bishop arrives — Black already stands well."],
+        ["Be7", "With the e-file open, e7 beats g7 here — Black is comfortably equal."],
       ],
     },
     {

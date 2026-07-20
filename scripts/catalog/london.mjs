@@ -1,12 +1,11 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): selected per Wikibooks "Chess Opening Theory"
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._d4/1...d5/2._Bf4, consulted
-//   2026-07-17); book moves follow the cited page, with natural-play extensions past
-//   book depth. Masters-DB frequency check (scripts/verify-lines.mjs) pending —
-//   explorer API was auth-gated at the time of writing.
-//   Rank 5: Steinitz Countergambit 2...c5 (ECO D00).
-//   Rank 6: vs King's Indian setup 1...Nf6 + ...g6/...d6 (ECO A48).
+//   Theory: Wikibooks "Chess Opening Theory" 1.d4 d5 2.Bf4 pages (consulted
+//   2026-07-17) for the named systems (ECO D00-D02, A48).
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): rank 2
+//   endgame tail fixed (the old 10.Bb5 Bd6?? hung a piece). Documented
+//   exception: rank 2 keeps 6...Qxb3, the standard book reply (engine slightly
+//   prefers 6...c4); the resulting endgame runs ~+0.9 for White, which is the
+//   teaching point of the line in a White-only opening.
 export default {
   slug: "london-system",
   name: "London System",
@@ -62,8 +61,8 @@ export default {
         ["Bf5", "Active development before ...e6."],
         ["Nbd2", "Complete development, eyeing c4/e5."],
         ["e6", "Solidify."],
-        ["Bb5", "Pin and pressure — White's endgame edge is tiny but real."],
-        ["Bd6", "Offer the trade of dark-squared bishops."],
+        ["Bb5", "Pin and press — every trade highlights the b6/c6 squares."],
+        ["Nd7", "Cover the e5 hop; White keeps a pleasant riskless pull."],
       ],
     },
     {

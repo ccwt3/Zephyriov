@@ -1,11 +1,9 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Semi-Slav, Meran (ECO D47). Rank 6: Tarrasch Defense (ECO D34).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO D06-D47.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): all lines
+//   clean; only the rank 2 (QGA) final move was tuned (...Qc7 instead of
+//   ...Be7, matching the main tabiya).
 export default {
   slug: "queens-gambit",
   name: "Queen's Gambit",
@@ -62,7 +60,7 @@ export default {
         ["Rd1", "The rook opposes the black queen — central pressure."],
         ["Nbd7", "Develop, holding c5 and e5."],
         ["Nc3", "Complete development; the d4-d5 break is in the air."],
-        ["Be7", "Prepare to castle; a rich middlegame awaits."],
+        ["Qc7", "Connect the rooks and watch e5/c5 — full equality in hand."],
       ],
     },
     {

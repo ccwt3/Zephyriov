@@ -1,12 +1,12 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): Wikibooks "Chess Opening Theory"
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e6/2._Nf3/2...d5/3._Nc3,
-//   consulted 2026-07-17) documents only 3...Nf6 and 3...d4 in depth (ranks 1-2 here);
-//   ranks 5-6 cover the remaining principled tries with natural-play continuations.
-//   Masters-DB frequency check (scripts/verify-lines.mjs) pending — explorer API
-//   was auth-gated at the time of writing.
-//   Rank 5: 3...c5 (ECO C00). Rank 6: 3...Nc6 (ECO C00).
+//   Theory: Wikibooks "Chess Opening Theory" 1.e4 e6 2.Nf3 d5 3.Nc3 page
+//   (consulted 2026-07-17) documents 3...Nf6 and 3...d4 in depth (ranks 1-2);
+//   3...dxe4, 3...Bb4 and 3...c5 are the remaining principled tries (ECO C00).
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): tails of
+//   ranks 2, 3 and 5 rebuilt along engine-approved play; the old rank 6
+//   (3...Nc6 "Development") was removed — it was filler with a mutual
+//   queen-trap blindness at move 8 (see Branch_changes 2026-07-20), and the
+//   variation has no theory presence. This opening keeps 5 quality lines.
 export default {
   slug: "french-two-knights",
   name: "French: Two Knights Variation",
@@ -56,14 +56,14 @@ export default {
         ["Nc6", "Develop and hold d4."],
         ["cxd4", "Open lines while Black's development lags."],
         ["cxd4", "Recapture, keeping the strong pawn."],
-        ["Ng3", "The knight finds a fine post, eyeing f5 and h5."],
-        ["e5", "Black builds an imposing pawn pair — but it can become a target."],
-        ["Bc4", "Develop with pressure on f7 before Black consolidates."],
-        ["Nf6", "Develop and cover d5/h5."],
-        ["d3", "Solidify the bishop and open the c1 diagonal."],
-        ["Bd6", "Develop, protecting e5."],
-        ["O-O", "Castle; White will attack the overextended center with f4."],
-        ["O-O", "Black castles; the center tension defines the game."],
+        ["Qa4", "The tactical point: pin the c6 knight against the king."],
+        ["Bd7", "Break the pin the only comfortable way."],
+        ["Nexd4", "Cash in: the pinned knight cannot recapture safely."],
+        ["Nge7", "Decline gracefully — recapturing walks into the d7 pin tricks."],
+        ["Qb3", "Keep the extra pawn and hit b7 on the way out."],
+        ["Rc8", "Activate with threats down the half-open file."],
+        ["Nxc6", "Simplify while a pawn up."],
+        ["Nxc6", "Recapture; Black's activity is real but White banks the pawn."],
       ],
     },
     {
@@ -84,12 +84,12 @@ export default {
         ["Ne7", "Develop around the e5 wedge."],
         ["Bd3", "Aim at h7 and prepare O-O."],
         ["Nbc6", "Finish minor-piece development."],
-        ["O-O", "King to safety; dark squares belong to White."],
-        ["Qc7", "Pressure e5 and c-file squares."],
-        ["Re1", "Reinforce e5 — the space-giving wedge must stand."],
-        ["Bd7", "Connect the queenside, planning ...O-O-O or ...f6."],
-        ["Bf4", "Overprotect e5 and dominate the dark squares."],
-        ["O-O-O", "Black castles long; opposite-side plans emerge."],
+        ["Bf4", "Overprotect e5 — the wedge is White's whole trump."],
+        ["c4", "Fix the queenside and gain space before White expands."],
+        ["Be2", "Retreat, keeping the c4 pawn under long-term watch."],
+        ["Qb6", "Hit b2 and activate on the dark squares."],
+        ["b3", "Calmly hold everything; the e5 grip promises the better game."],
+        ["O-O", "Black castles; a rich, closed strategic battle begins."],
       ],
     },
     {
@@ -135,39 +135,13 @@ export default {
         ["Bb5", "Pin, stepping up the pressure on the center."],
         ["Nf6", "Develop; the d5 pawn is well covered."],
         ["O-O", "King safety first."],
-        ["Be7", "Prepare to castle."],
-        ["dxc5", "Trade into the isolani structure White wants."],
-        ["Bxc5", "Recapture, developing again for free."],
-        ["Bg5", "The classic anti-IQP pin against d5's defender."],
-        ["O-O", "Castle; piece activity must offset the isolated pawn."],
-        ["Bxc6", "Trade to fix Black with weak queenside pawns."],
-        ["bxc6", "Recapture — hanging pawns, open b-file: double-edged."],
-      ],
-    },
-    {
-      rank: 6,
-      name: "Development: 3...Nc6",
-      moves: [
-        ["e4", "Take the center."],
-        ["e6", "The French Defense."],
-        ["Nc3", "Develop and cover e4."],
-        ["d5", "Challenge e4."],
-        ["Nf3", "The Two Knights setup."],
-        ["Nc6", "Pure development, keeping every pawn break in reserve."],
-        ["d4", "Build the full center while it's free."],
-        ["dxe4", "Trade before the center gets overwhelming."],
-        ["Nxe4", "Recapture with a strong central knight."],
-        ["Nf6", "Challenge it immediately."],
-        ["Nxf6+", "Trade on White's terms."],
-        ["Qxf6", "Recapture with the queen — ...Bd6 and ...O-O come fast."],
-        ["Bd3", "The kingside diagonal."],
-        ["Bd6", "Mirror it, eyeing h2."],
-        ["O-O", "King safety."],
-        ["O-O", "Black castles; development is complete and sound."],
-        ["c3", "Solidify d4 against the coming ...e5 break."],
-        ["e5", "The freeing break anyway — well-timed equality."],
-        ["dxe5", "Trade; refusing leaves the tension in Black's favor."],
-        ["Nxe5", "Recapture; the symmetrical position holds no fear for Black."],
+        ["Bd6", "Active development on the strong diagonal before c5 resolves."],
+        ["dxc5", "Trade into the isolani structure at the right moment."],
+        ["Bxc5", "Recapture; the development comes for free."],
+        ["Ne5", "Occupy the central outpost, lining up against c6."],
+        ["O-O", "King safety; d5 is dynamically defended."],
+        ["Nxc6", "Win the structural battle — c6 stays weak forever."],
+        ["bxc6", "Recapture; the open b-file and bishop pair are the compensation."],
       ],
     },
   ],

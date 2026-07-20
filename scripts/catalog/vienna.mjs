@@ -1,12 +1,12 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...e5/2._Nc3, consulted
-//   2026-07-17); natural-play extensions past book depth. Masters-DB frequency check
-//   (scripts/verify-lines.mjs) pending — explorer API was auth-gated at the time of writing.
-//   Rank 5: Frankenstein-Dracula 3.Bc4 Nxe4 (ECO C27).
-//   Rank 6: Vienna Gambit Accepted 3...exf4 4.e5 (ECO C29).
+//   Theory: Wikibooks "Chess Opening Theory" 1.e4 e5 2.Nc3 pages (consulted
+//   2026-07-17) for the named variations (ECO C25-C29).
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): tails of
+//   ranks 1-3 fixed; rank 6 rebuilt from move 7 (7.Bb5+! — the old line had
+//   White recapture into a losing tactic). Documented exception: rank 5 keeps
+//   5...Nc6, the canonical Frankenstein-Dracula book move, though the engine
+//   mildly disapproves — the opening is studied from White and the line is the
+//   documented main theory.
 export default {
   slug: "vienna-game",
   name: "Vienna Game",
@@ -37,7 +37,7 @@ export default {
         ["O-O", "King safety; the half-open f-file is White's prize."],
         ["Nc6", "Develop and pressure d4."],
         ["Be3", "Hold d4; White's center and f-file promise attacking chances."],
-        ["cxd4", "Trade to relieve the pressure."],
+        ["c4", "Clamp the queenside with tempo on the bishop — the modern equalizer."],
       ],
     },
     {
@@ -62,8 +62,8 @@ export default {
         ["Nxb3", "Trade anyway to blunt the diagonal."],
         ["axb3", "Recapture; the open a-file is a small bonus."],
         ["c6", "Prepare ...b5 and give the queen c7."],
-        ["g4", "Launch the pawn storm against the castled king."],
-        ["b5", "Black races on the other wing — sharp opposite-flank play."],
+        ["Qe2", "Connect the rooks; the g4 storm comes under full cover."],
+        ["d5", "The classical counter: meet a wing attack in the center."],
       ],
     },
     {
@@ -87,7 +87,7 @@ export default {
         ["O-O", "Castle behind the fianchetto wall."],
         ["O-O", "Black castles."],
         ["d3", "Complete the structure; c1's bishop gets options."],
-        ["Re8", "Support e5 down the half-open file."],
+        ["h6", "Deny g5 to bishop and knight — useful prophylaxis."],
         ["Rb1", "The other point of bxc3 — pressure on b7 forever."],
         ["Rb8", "Black defends passively; White keeps a pleasant grind."],
       ],
@@ -160,14 +160,14 @@ export default {
         ["d6", "Strike at the cramping e5 pawn."],
         ["d4", "Hold the spearhead with the full center."],
         ["dxe5", "Trade before White consolidates."],
-        ["Nxe5", "Recapture with a strong knight — d4 stays intact."],
-        ["Bd6", "Develop against the proud e5 knight."],
-        ["Bxf4", "Regain the gambit pawn with interest in development."],
-        ["Ne7", "Belated development toward safety."],
-        ["Bc4", "The classic diagonal — f7 is sensitive again."],
-        ["O-O", "Black castles out of the center at last."],
-        ["O-O", "White castles; the lead in development persists."],
-        ["Nbc6", "Challenge the e5 knight; White is simply better."],
+        ["Bb5+", "In-between check: misplace Black's queenside first."],
+        ["c6", "The natural block."],
+        ["Bc4", "Now swing to the real diagonal — f7 again."],
+        ["b5", "Push the bishop around while grabbing space."],
+        ["Bb3", "Keep the f7 pressure; the pawn grabs cost Black time."],
+        ["exd4", "Take a second center pawn — greed White will punish."],
+        ["O-O", "Development over material: every white piece works."],
+        ["Be7", "Try to catch up; White's initiative is worth the pawns."],
       ],
     },
   ],

@@ -1,11 +1,9 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Karpov 4...Nd7 (ECO B17). Rank 6: Tartakower 5...exf6 (ECO B15).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO B10-B17.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): all lines
+//   clean; only the rank 6 final move was fixed (...cxd4 instead of ...Nc6,
+//   which dropped ~1 pawn of eval to a d4-d5 tactic).
 export default {
   slug: "caro-kann",
   name: "Caro-Kann Defense",
@@ -166,7 +164,7 @@ export default {
         ["O-O", "King safety."],
         ["c5", "Break at d4 — Black's active plan in this structure."],
         ["Be3", "Hold d4 and complete development."],
-        ["Nc6", "Develop with pressure; Black's pieces fully justify the pawns."],
+        ["cxd4", "Resolve the tension; after Nxd4 Black develops with full equality."],
       ],
     },
   ],

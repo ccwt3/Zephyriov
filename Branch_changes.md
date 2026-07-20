@@ -134,3 +134,14 @@ Pendiente para probar en vivo: pegar los dos SQL en Supabase, llenar `.env.local
 - Verificado: los 108 enlaces internos de los 4 documentos resuelven (incluidos anchors, con el algoritmo de slug de GitHub).
 
 [Listo :v]
+
+## 2026-07-20 — Auditoría del catálogo con Stockfish + limpieza de líneas basura
+
+- **Motivación**: líneas del catálogo con jugadas absurdas — el ejemplo detonante fue la Two Knights francesa 3...Nc6, donde tras 7.Bd3 Bd6?? el blanco podía atrapar la dama con 8.Bg5 y la línea seguía con 8.O-O?? (oscilaciones de ±5 peones en la evaluación). La baseline con motor confirmó 129 problemas en el catálogo completo.
+- `scripts/audit-lines.mjs` **nuevo**: auditoría con Stockfish (UCI). Evalúa cada posición de cada línea (cache por FEN+depth), reporta jugadas que pierden >0.55 vs la mejor y finales fuera de ±0.7 para el lado estudiado; modo `--explore "e4 e5 ..."` con multipv para investigar teoría. Requiere `STOCKFISH_PATH`; `AUDIT_DEPTH` opcional (default 16).
+- **Catálogo re-curado** (Stockfish 17.1 + teoría publicada/Wikibooks): 35 líneas corregidas (colas reconstruidas), 4 eliminadas por no dar la talla — Fantasy 3...Nf6, French Two Knights 3...Nc6, Portuguese e Icelandic del Escandinavo. El catálogo queda en 16 aperturas / 92 líneas / 1,840 jugadas; una apertura puede tener 3–6 líneas (la app ya no asume 6). Excepciones aceptadas y documentadas en el comentario de cada `.mjs` (jugadas definitorias tipo 2.f4, jugadas de libro del rival, y el Fried Liver que castiga 5...Nxd5 a propósito).
+- `scripts/generate-seed.mjs` **rehecho**: valida 3–6 líneas por apertura, ya no regenera el delta 2026-07-17 (queda como histórico) y ahora emite `supabase/migrations/2026-07-20-curated-lines.sql` — migración de sincronización **idempotente** que diffea catálogo vs DB por (slug, rank) comparando la secuencia SAN: reemplaza jugadas de líneas cambiadas, borra las eliminadas, sincroniza nombres/explicaciones y **resetea las tarjetas SRS solo de las líneas cuyo contenido cambió** (state='new', intervalo 0, unlocked_moves = moves_per_block del usuario).
+- Verificación contra la DB viva (solo lectura): 57 líneas quedan intactas, 35 se reemplazan (sus tarjetas se resetean), 4 se borran. **La migración NO se aplicó** — está lista para pegar en el SQL editor de Supabase.
+- README: sección del catálogo y "Metodología de curaduría" actualizadas con la barra de calidad y el flujo de auditoría.
+
+[Listo :v]

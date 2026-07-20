@@ -438,7 +438,7 @@ Estética de cartel impreso años 20–50 (papel envejecido + rojo cartel + teal
 
 ## Catálogo de aperturas
 
-16 aperturas × 6 líneas × ~10 jugadas del estudiante (~1,920 medias-jugadas con explicación en inglés): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian, Sicilian Hyper-Accelerated Dragon y King's Gambit. (Hasta 2026-07-17 eran 14 × 4; la ampliación a 6 líneas no cambia el comportamiento de la sesión diaria — solo agranda el pool de líneas nuevas que el session builder reparte con el mismo presupuesto `lines_per_session`.)
+16 aperturas × 4–6 líneas (92 líneas, 1,840 medias-jugadas con explicación en inglés): Ponziani, Caro-Kann Fantasy, French Two Knights, Italian, Ruy Lopez, Vienna, London, Queen's Gambit, Sicilian Dragon, Modern, Caro-Kann, French, Scandinavian, King's Indian, Sicilian Hyper-Accelerated Dragon y King's Gambit. (Hasta 2026-07-17 eran 14 × 4; el 2026-07-20 se auditó todo el catálogo con Stockfish y se recortaron 4 líneas de relleno — una apertura puede tener entre 3 y 6 líneas según lo que la teoría real dé; la app no asume un número fijo.)
 
 **Formato fuente** (un archivo por apertura en [scripts/catalog/](scripts/catalog/)):
 
@@ -456,7 +456,10 @@ export default {
 };
 ```
 
-**Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs` y corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados). El comando genera **dos** archivos: `supabase/seed.sql` (catálogo completo, para instalaciones frescas — no es re-ejecutable sobre una DB ya sembrada) y la migración delta vigente en `supabase/migrations/` (solo el contenido nuevo, con `on conflict do nothing`; es lo que se pega en una DB viva). Para verificar el contenido contra práctica magistral existe `node scripts/verify-lines.mjs` (recorre cada línea contra la Lichess Masters DB; requiere que el explorer API esté accesible) y su modo de investigación `--explore "e4 e5 ..."`.
+**Para editar el catálogo**: modifica/agrega los `.mjs`, regístralo en `scripts/catalog/index.mjs` y corre `node scripts/generate-seed.mjs` (valida cada secuencia con chess.js: legalidad, SAN canónico, ranks duplicados, 3–6 líneas por apertura). El comando genera **dos** archivos: `supabase/seed.sql` (catálogo completo, para instalaciones frescas — no es re-ejecutable sobre una DB ya sembrada) y `supabase/migrations/2026-07-20-curated-lines.sql`, una **migración de sincronización idempotente** para DBs vivas: diffea el catálogo contra la DB por `(slug, rank)` comparando la secuencia SAN, reemplaza las jugadas de las líneas que cambiaron (reseteando sus tarjetas SRS — el contenido memorizado cambió), borra las líneas eliminadas del catálogo y sincroniza nombres/explicaciones in place. Herramientas de verificación:
+
+- `node scripts/audit-lines.mjs` — **auditoría con motor** (requiere `STOCKFISH_PATH` apuntando a un binario de Stockfish; `AUDIT_DEPTH` opcional, default 16). Evalúa cada posición de cada línea y reporta jugadas que pierden >0.55 respecto a la evaluación de la posición y finales fuera de ±0.7 para el lado estudiado. Modo investigación: `--explore "e4 e5 ..."` imprime los mejores candidatos del motor con su PV.
+- `node scripts/verify-lines.mjs` — frecuencia contra la Lichess Masters DB (requiere que el explorer API esté accesible; a 2026-07-20 sigue exigiendo autenticación).
 
 ### Metodología de curaduría (contenido basado en teoría real)
 
@@ -469,7 +472,13 @@ export default {
 5. **Dejar trazabilidad**: cada `scripts/catalog/*.mjs` debe llevar, en un comentario al inicio, la fuente consultada por línea (nombre + URL o referencia bibliográfica) y la fecha de consulta — la teoría evoluciona, y sin esto no se puede auditar ni volver a verificar después.
 6. **Validar y regenerar**: `node scripts/generate-seed.mjs` sigue siendo la red de seguridad para legalidad/SAN/ranks duplicados, pero es un chequeo adicional sobre el paso 3, no un sustituto de la verificación teórica.
 
-Las líneas rank 1–4 de las 14 aperturas originales no pasaron por este proceso y quedan pendientes de auditoría. Las líneas rank 5–6 y las 2 aperturas agregadas el 2026-07-17 sí lo siguieron (fuente principal: Wikibooks "Chess Opening Theory" + teoría estándar publicada, con trazabilidad en el comentario de cada `.mjs`); su verificación de frecuencia contra la Masters DB quedó pendiente porque el explorer API exigía autenticación ese día — correr `node scripts/verify-lines.mjs` cuando vuelva a estar accesible.
+**Auditoría 2026-07-20 (Stockfish 17.1, depth 16–20).** Todo el catálogo pasó por `scripts/audit-lines.mjs`: la baseline arrojó 129 problemas (finales que colgaban piezas, "extensiones de juego natural" con oscilaciones de ±5 peones, líneas de relleno sin presencia teórica). Resultado:
+
+- **35 líneas corregidas** (colas reconstruidas con teoría real + jugadas aprobadas por el motor) y **4 líneas eliminadas** por no alcanzar la barra de calidad: Fantasy 3...Nf6 (el negro queda ≥0.7 abajo incluso con juego óptimo), French Two Knights 3...Nc6 (relleno con ceguera mutua de dama atrapada), y Portuguese + Icelandic Gambit del Escandinavo (≈+1 para el blanco con juego correcto; la vieja línea islandesa además enseñaba al blanco a regalar la dama).
+- **Barra de calidad**: ninguna jugada del catálogo pierde >0.55 respecto a la mejor del motor, y ningún final queda a más de ~0.7 de desventaja para el lado estudiado — con **excepciones documentadas** en el comentario de cada `.mjs`: jugadas definitorias de la apertura (2.f4 del King's Gambit ≈ -0.6, 3.c3 del Ponziani ≈ -0.6), jugadas de libro del rival ligeramente subóptimas pero canónicas (4...Ne7 del Ponziani, 5...Nc6 del Frankenstein-Dracula, 6...Qxb3 del London, 6...e5 del Sämisch), y el Fried Liver (rank 4 de la Italiana), que termina ≈+0.9 a propósito porque castiga el error común 5...Nxd5 (la receta sana del negro es la rank 2, 5...Na5).
+- Los finales de aperturas naturalmente concesivas (Escandinavo, Modern, KID) rondan +0.5/+0.7 para el blanco a depth 20 — el veredicto honesto del motor sobre esas aperturas, dentro de la barra.
+
+La verificación de frecuencia contra la Masters DB (`verify-lines.mjs`) sigue pendiente: el explorer API de Lichess exige autenticación desde antes del 2026-07-17.
 
 ## Librería de aperturas
 

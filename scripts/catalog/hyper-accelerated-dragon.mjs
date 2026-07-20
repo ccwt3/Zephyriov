@@ -1,13 +1,10 @@
 // Sources (see README "Metodología de curaduría"):
-//   Added 2026-07-17. Selected per Wikibooks "Chess Opening Theory"
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory/1._e4/1...c5/2._Nf3/2...g6,
-//   consulted 2026-07-17): 3.d4 (Open, incl. 4.Qxd4!? with the documented
-//   4...Nf6 5.e5 Nc6 6.Qa4 Nd5 7.Qe4 line), 3.c3 (deferred Alapin) and
-//   3.c4 (Maroczy transposition: 3...Nc6 4.d4 cxd4 5.Nxd4 Bg7) are the
-//   documented White tries; 3.Bc4 is the common club sideline. Book moves
-//   follow the cited pages, with natural-play extensions past book depth.
-//   Masters-DB frequency check (scripts/verify-lines.mjs) pending — explorer
-//   API was auth-gated at the time of writing.
+//   Theory: Wikibooks "Chess Opening Theory" 1.e4 c5 2.Nf3 g6 page (consulted
+//   2026-07-17): 3.d4 (Open, incl. 4.Qxd4!?), 3.c3 (deferred Alapin) and 3.c4
+//   (Maroczy) are the documented White tries; 3.Bc4 is the club sideline. B27.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): rank 3
+//   (4.Qxd4) rebuilt from move 7 with the engine main line 7...Nb6 8.Nc3 Bg7
+//   9.Bf4 d5! (the old ...Nc7/...Ne6 regroup shed ~1.3 of eval).
 export default {
   slug: "hyper-accelerated-dragon",
   name: "Sicilian: Hyper-Accelerated Dragon",
@@ -84,13 +81,13 @@ export default {
         ["Qa4", "Keep the pin on c6 and stay active."],
         ["Nd5", "Centralize with tempo threats of ...Nc7 and ...Nb6."],
         ["Qe4", "The main line: hit d5 and hold e5 in one move."],
-        ["Nc7", "Retreat with the plan of ...Ne6 — the knight found work."],
-        ["Bc4", "Develop actively while Black regroups."],
-        ["Ne6", "The knight settles, covering the key dark squares."],
-        ["O-O", "King safety."],
-        ["Bg7", "The bishop finally lands, hitting e5."],
-        ["Re1", "Defend e5 laterally."],
-        ["O-O", "Castle; Black is fully coordinated and equal."],
+        ["Nb6", "The precise retreat: cover d7/c4 and free the d-pawn."],
+        ["Nc3", "Develop with d5 under control — for now."],
+        ["Bg7", "The bishop lands, hitting e5 at last."],
+        ["Bf4", "Reinforce e5; development races matter here."],
+        ["d5", "The freeing strike anyway — tactics back it up."],
+        ["exd6", "En passant, avoiding a worse structure."],
+        ["Bxc3+", "The zwischenzug: wreck the pawns before recapturing on d6."],
       ],
     },
     {

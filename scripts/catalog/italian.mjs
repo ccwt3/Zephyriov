@@ -1,11 +1,11 @@
 // Sources (see README "Metodología de curaduría"):
-//   ranks 1-4: initial catalog (2026-07-14), legality-validated only; theory audit pending.
-//   ranks 5-6 (added 2026-07-17): standard published theory for the named variations,
-//   cross-checked against Wikibooks "Chess Opening Theory" where coverage exists
-//   (en.wikibooks.org/wiki/Chess_Opening_Theory, consulted 2026-07-17); natural-play
-//   extensions past book depth. Masters-DB frequency check (scripts/verify-lines.mjs)
-//   pending — the explorer API was auth-gated at the time of writing.
-//   Rank 5: Giuoco Piano, Center Attack 4.c3 + 5.d4 (ECO C54). Rank 6: Two Knights, Modern 4.d3 (ECO C55).
+//   Theory: standard published theory for the named variations, cross-checked
+//   against Wikibooks "Chess Opening Theory" (consulted 2026-07-17). ECO C50-C55.
+//   Engine audit 2026-07-20 (Stockfish 17.1, scripts/audit-lines.mjs): rank 4
+//   tail fixed (9.Bb3!, the theory move — the old 9.Qe4 lost the thread).
+//   Documented exception: the Fried Liver (rank 4) ends ~+0.9 for White by
+//   design — it punishes the dubious-but-common 5...Nxd5. Black's sound
+//   treatment of 4.Ng5 is rank 2 (5...Na5), also in this catalog.
 export default {
   slug: "italian-game",
   name: "Italian Game",
@@ -111,7 +111,7 @@ export default {
         ["Ke6", "The only way to hold the knight — the king marches out."],
         ["Nc3", "Pile on d5 with every developing move."],
         ["Nb4", "Reinforce d5 while threatening ...Nxc2 forks."],
-        ["Qe4", "Centralize: keep hitting d5 and cut the king's escape."],
+        ["Bb3", "Preserve the bishop and keep every threat on d5 alive."],
         ["c6", "Finally shore up d5 with the pawn."],
         ["a3", "Push the b4 knight away from its defense."],
         ["Na6", "The knight retreats; White regains material with a raging attack."],
